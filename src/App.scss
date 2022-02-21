@@ -1,0 +1,78 @@
+@import "~bootstrap/scss/bootstrap";
+
+.App {
+  text-align: center;
+}
+
+svg text {
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+svg text::selection {
+  background: none;
+}
+
+table.custom-table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+
+  tr {
+
+    td {
+      word-wrap: break-word;
+    }
+
+  }
+}
+
+
+
+.wizard-modal {
+  width: 75vw;
+  max-width: 800px;
+}
+
+.filter-bar {
+  max-height: 100%;
+  overflow-y: auto;
+}
+
+.custom-dialog {
+  width: 90wv;
+  max-width: 90wv;
+}
+Table {
+
+  tr {
+    .td-10 {
+      width: 10%
+    }
+    .td-20 {
+      width: 20%
+    }
+    .td-30 {
+      width: 30%
+    }
+    .td-40 {
+      width: 40%
+    }
+    .td-50 {
+      width: 50%
+    }
+    .td-right {
+      text-align: right;
+    }
+    .td-left {
+      text-align: left;
+    }
+    .td-center {
+      text-align: center;
+    }
+    .td-break-word {
+      word-break: break-word;
+    }
+  }
+}  

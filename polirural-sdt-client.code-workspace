@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.preferredLightColorTheme": "Visual Studio Light",
+		"workbench.colorTheme": "Abyss"
+	}
+}
