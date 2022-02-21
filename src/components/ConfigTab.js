@@ -13,21 +13,18 @@ function ConfigTab({ tabTitle }) {
     const [editDisplayParameter, setEditDisplayParameter] = useState(false)
     const [selectedParameter, setSelectedParameter] = useState(null)
 
-    console.log("modconf", useContext(FilterContext));
-
-    const deleteInputParameter = useCallback((paramName) => {
+    const deleteInputParameter = useCallback(function _deleteInputParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the input parameter "${paramName}" from the model configuration?`)) return;
 
         updateModelConfig(modelConfig => {
             var tmpParameters = { ...modelConfig.parameters }
             delete tmpParameters[paramName];
             modelConfig.parameters = tmpParameters;
-            return modelConfig;
         });
 
     }, [updateModelConfig])
 
-    const deleteDisplayParameter = useCallback((paramName) => {
+    const deleteDisplayParameter = useCallback(function _deleteDisplayParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the display parameter "${paramName}" from the model configuration?`)) return;
 
         updateModelConfig(modelConfig => {
@@ -38,7 +35,7 @@ function ConfigTab({ tabTitle }) {
 
     }, [updateModelConfig])
 
-    const addUpdateInputParameter = useCallback((paramName, newParamDefn) => {
+    const addUpdateInputParameter = useCallback(function _addUpdateInputParameter(paramName, newParamDefn) {
 
         if (modelConfig.parameters[paramName] && !window.confirm(`Are you sure you want to update the existing field "${paramName}" in the model configuration?`)) return;
 
@@ -47,28 +44,29 @@ function ConfigTab({ tabTitle }) {
             var tmpParams = { ...tmpConfig.parameters }
             tmpParams[paramName] = newParamDefn;
             tmpConfig.parameters = tmpParams;
-            console.log(tmpConfig);
-            updateModelConfig(tmpConfig);
             setEditInputParameter(false);
             setSelectedParameter(null);
+            updateModelConfig(tmpConfig);
         });
 
     }, [updateModelConfig, modelConfig.parameters, setEditInputParameter, setSelectedParameter])
 
-    const addUpdateDisplayParameter = useCallback((paramName, newParamDefn) => {
+    const addUpdateDisplayParameter = useCallback(function _addUpdateDisplayParameter(paramName, newParamDefn) {
         if (modelConfig.visualizations[paramName] && !window.confirm(`Are you sure you want to update the existing display parameter "${paramName}" in the model configuration?`)) return;
         updateModelConfig(modelConfig => {
             var tmpConfig = { ...modelConfig }
-            tmpConfig["visualizations"][paramName] = newParamDefn;
-            console.log(tmpConfig);
-            updateModelConfig(tmpConfig);
+            delete tmpConfig.visualizations[paramName];
+            for (const [key, val] of Object.entries(newParamDefn)) {
+                tmpConfig["visualizations"][key] = val;
+            }
             setEditDisplayParameter(false);
             setSelectedParameter(null);
+            updateModelConfig(tmpConfig);
         });
 
     }, [updateModelConfig, modelConfig.visualizations, setEditDisplayParameter, setSelectedParameter])
 
-    const editInputParamsModal = useMemo(() => {
+    const editInputParamsModal = useMemo(function _editInputParamsModal() {
         return (
             <InputParameter
                 key={`edit-input-parameter-${selectedParameter}`}
@@ -88,7 +86,7 @@ function ConfigTab({ tabTitle }) {
         )
     }, [editInputParameter, selectedParameter, inputParameters, modelConfig, addUpdateInputParameter]);
 
-    const editDisplayParamsModal = useMemo(() => {
+    const editDisplayParamsModal = useMemo(function _editDisplayParamsModal() {
         return (
             <DisplayParameter
                 key={`edit-display-parameter-${selectedParameter}`}
@@ -108,7 +106,7 @@ function ConfigTab({ tabTitle }) {
         )
     }, [editDisplayParameter, selectedParameter, displayParameters, modelConfig, addUpdateDisplayParameter]);
 
-    const inputParamRows = useMemo(() => {
+    const inputParamRows = useMemo(function generateInputParamRows() {
         if (!modelConfig || !modelConfig.parameters) return console.debug("Did not generate input parameter rows");
         return Object.keys(modelConfig.parameters).map((parameterName, i) => {
             let parameterData = modelConfig.parameters[parameterName];
@@ -127,11 +125,9 @@ function ConfigTab({ tabTitle }) {
         })
     }, [modelConfig, setEditInputParameter, deleteInputParameter]);
 
-    const displayParamRows = useMemo(() => {
+    const displayParamRows = useMemo(function generateDisplayParamRows() {
         if (!modelConfig || !modelConfig.visualizations) return console.debug("Did not generate display parameter rows");
-        return null;
         return Object.keys(modelConfig.visualizations).map((parameterName, i) => {
-            console.log(parameterName); 
             const parameterData = modelConfig.visualizations[parameterName];
             return (
                 <tr key={`display-param-row-${i}`}>

@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import Api from "../utils/Api";
 
 import FilterContext from "./FilterContext";
 
@@ -29,6 +30,18 @@ export function FilterProvider({ children }) {
         });
     }, [setDefaultFilter]);
 
+    const updateModelConfig = useCallback(function _updateModalConfig(newModelConfig) {        
+        Api.set(newModelConfig.modelName, "config", newModelConfig)
+        .then(function _handleResponse(res){
+            setModelConfig(newModelConfig);
+            console.debug('Updated', res);
+        })
+        .catch(function handleError(err) {
+            console.error(err);
+        })
+
+    }, [setModelConfig]);
+
     const providerValue = {
         updateFilter,
         replaceFilter: setFilter,
@@ -41,7 +54,7 @@ export function FilterProvider({ children }) {
         inputParameters,
         updateDisplayParameters: setDisplayParameters,
         displayParameters,
-        updateModelConfig: setModelConfig,
+        updateModelConfig,
         modelConfig,
         updateScenarios: setScenarios,
         scenarios

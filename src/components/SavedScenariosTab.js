@@ -28,7 +28,6 @@ export function SavedScenariosTab({ tabTitle }) {
     }, [updateScenarios, modelName]);
 
     const loadScenario = useCallback((scenarioName) => {
-        console.log(scenarios[scenarioName]);
         const scenarioDefn = { ...scenarios[scenarioName] };
         replaceFilter(scenarioDefn);
     }, [replaceFilter, scenarios])
@@ -39,23 +38,29 @@ export function SavedScenariosTab({ tabTitle }) {
         updateScenarios(currentScenarios => {
             let tmpScenarios = { ...currentScenarios };
             delete tmpScenarios[scenarioName];
-            Api.set(modelName, "saved-scenarios", tmpScenarios).then(res => {
-                console.log("Updated scenarios after delete");
-            });
+            Api.set(modelName, "saved-scenarios", tmpScenarios)
+                .then(function _handleResponse(res) {
+                    console.log("Updated scenarios after delete");
+                })
+                .catch(function _handleError(err) {
+                    console.error(err);
+                });
             return tmpScenarios;
         });
 
     }, [updateScenarios, modelName]);
 
-    useEffect(() => {
+    useEffect(function _loadSavedScenarios() {
         Api.get(modelName, "saved-scenarios")
-            .then(res => {
+            .then(function _handleResponse(res) {
                 if (!res.data || !res.data.value) {
                     throw new Error("No saved scenario data");
                 }
                 updateScenarios(res.data.value);
             })
-            .catch(err => console.error("Error loading scenarios", err))
+            .catch(function _handleError(err) {
+                console.error("Error loading scenarios", err);
+            });
 
     }, [updateScenarios, modelName]);
 
@@ -71,7 +76,7 @@ export function SavedScenariosTab({ tabTitle }) {
             </thead>
             <tbody>
                 {Array.isArray(Object.keys(scenarios)) &&
-                    Object.keys(scenarios).map((scenarioName) => {
+                    Object.keys(scenarios).map(function _forEachScenarioName(scenarioName) {
                         return (
                             <tr key={`saved-scenario-${scenarioName}`}>
                                 <td className="td-60">
@@ -79,12 +84,12 @@ export function SavedScenariosTab({ tabTitle }) {
                                 </td>
                                 <td className="td-right td-20">
                                     <div className="d-grid gap-2">
-                                        <Button variant="danger" size="sm" onClick={() => deleteScenario(scenarioName)}><Trash /> Delete scenario</Button>
+                                        <Button variant="danger" size="sm" onClick={function _onDeleteScenario() { deleteScenario(scenarioName) }}><Trash /> Delete scenario</Button>
                                     </div>
                                 </td>
                                 <td className="td-right td-20">
                                     <div className="d-grid gap-2">
-                                        <Button variant="primary" size="sm" onClick={() => loadScenario(scenarioName)}><Folder2Open /> Open scenario</Button>
+                                        <Button variant="primary" size="sm" onClick={function _onLoadScenario() { loadScenario(scenarioName) }}><Folder2Open /> Open scenario</Button>
                                     </div>
                                 </td>
                             </tr>
@@ -93,7 +98,7 @@ export function SavedScenariosTab({ tabTitle }) {
             </tbody>
         </Table>
         <h4>Current scenario</h4>
-        <Button size="sm" onClick={() => saveScenario(filter)}>Save current scenario</Button>
+        <Button size="sm" onClick={function _onSaveNewScenario() { saveScenario(filter) }}>Save current scenario</Button>
         <Table striped bordered hover>
             <thead>
                 <tr>
@@ -102,10 +107,10 @@ export function SavedScenariosTab({ tabTitle }) {
                 </tr>
             </thead>
             <tbody>
-                {filter && Object.keys(filter).sort().map(paramName => {
+                {filter && Object.keys(filter).sort().map(function _forEachParamName(paramName) {
                     const paramValue = JSON.stringify(filter[paramName], null, 2);
                     return (
-                        <tr>
+                        <tr key={`current-scenario-key-${paramName}`}>
                             <td className="td-60">{paramName}</td>
                             <td className="td-40 td-right">{paramValue}</td>
                         </tr>

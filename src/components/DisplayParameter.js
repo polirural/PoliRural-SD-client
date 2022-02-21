@@ -16,9 +16,9 @@ export function DisplayParameter({ displayParameters, save, show, cancel}) {
         const data = new FormData(event.target);
         const values = Object.fromEntries(data.entries());
         // TODO: For multi values, iterate and use get all on relevant keys of "value"
-        const { parameter, ...subvalues } = values;
+        const { parameter, title } = values;
         const param = {};
-        param[parameter] = { ...subvalues };
+        param[parameter] = title;
         save(param);
     }, [save]);
 

@@ -123,50 +123,51 @@ function VidzemeWizard(props) {
     const { modelName } = useMatch('/:modelName')?.params;
 
     // Replace model config in database
-    const saveModelConfig = useCallback((updatedModelConfig) => {
-        Api.set(modelName, "config", updatedModelConfig)
-            .then(res => {
-                updateModelConfig(updatedModelConfig);
-                console.debug("Updated model configuration", res)
-            })
-            .catch(err => console.error("Error updating model config", err));
-    }, [updateModelConfig, modelName]);
+    const saveModelConfig = useCallback(function _saveModelConfig(updatedModelConfig) {
+        updateModelConfig(updatedModelConfig);
+        // Api.set(modelName, "config", updatedModelConfig)
+        //     .then(function _handleResponse(res) {
+        //         console.debug("Updated model configuration", res)
+        //     })
+        //     .catch(function _handleError(err) {
+        //         console.error("Error updating model config", err)
+        //     });
+    }, [updateModelConfig]);
 
-    useEffect(() => {
-        if (!modelName) return console.error("Problem with model name", modelName);
+    useEffect(function _loadModelConfig() {
+        if (!modelName) return console.debug("Problem with model name", modelName);
         Api.get(modelName, "config")
-            .then((res) => {
+            .then(function _handleResponse(res) {
                 if (!res.data || !res.data.value) {
                     throw new Error("No model data");
                 }
                 console.debug("Loaded model configuration", res);
                 updateModelConfig(res.data.value);
             })
-            .catch(err => {
+            .catch(function _handleError(err) {
                 saveModelConfig(_config);
-                console.log("Error loading model config", err);
+                console.debug("Error loading model config", err);
             });
     }, [saveModelConfig, updateModelConfig, modelName]);
 
-    const parameters = useMemo(() => {
+    const parameters = useMemo(function _generateParameters() {
 
         if (!modelConfig || !modelConfig.parameters) return [];
 
         return Object.keys(modelConfig.parameters)
-            .map(paramName => {
-                const {
+            .map(function _forEachParameter(paramName) {
+                let {
                     title,
                     label = '',
                     help = '',
                     xRange = [],
                     yRange = [],
+                    defaultValue = undefined,
                     min = 0,
                     max = 0,
                     type = 'number'
                 } = modelConfig.parameters[paramName];
-
-                let defaultValue = null;
-
+                
                 if (filter[paramName]) {
                     defaultValue = filter[paramName];
                 }

@@ -40,7 +40,7 @@ function ResultTab({ tabTitle }) {
     }, [filter, modelName, setRunModel, setLoading, loadedDisplayParameters, updateDisplayParameters, setLoadedDisplayParameters]);
 
     useEffect(() => {
-        if (!runModel) return console.debug("Not running model");
+        if (!runModel) return console.debug("Postponing update until manual model execution");
         reload();
     }, [reload, runModel])
 
@@ -167,7 +167,7 @@ function ResultTab({ tabTitle }) {
                 </ButtonGroup>
                 <ButtonGroup key="bg-scenario" className="me-2">
                     <DropdownButton size="sm" id="dropdown-basic" title="Compare to:">
-                        {Object.keys(scenarios).map(scenarioName => (<Dropdown.Item>{scenarioName}</Dropdown.Item>))}
+                        {Object.keys(scenarios).map(scenarioName => (<Dropdown.Item key={`dd-item-${scenarioName}`}>{scenarioName}</Dropdown.Item>))}
                     </DropdownButton>
                 </ButtonGroup>
                 <ButtonGroup key="bg-download" className="me-2">
