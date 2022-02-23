@@ -2,25 +2,25 @@ import React, { useMemo, useCallback, useEffect, useState, useContext } from "re
 import { Spinner, Table, Button, ButtonGroup, ButtonToolbar, Dropdown, DropdownButton, Row, Col, Modal } from "react-bootstrap";
 import LineChart from "./LineChart";
 import XLSX from 'xlsx';
-import axios from "axios";
 import FilterContext from "../context/FilterContext";
 import PropTypes from 'prop-types';
 import Api from "../utils/Api";
 
 function ResultTab({ tabTitle }) {
 
-    const [runModel, setRunModel] = useState(true);
+    // const [runModel, setRunModel] = useState(true);
     const [loadedDisplayParameters, setLoadedDisplayParameters] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const { filter, scenarios, modelConfig, updateDisplayParameters } = useContext(FilterContext);
+    const { filter, scenarios, modelConfig, updateDisplayParameters, runModel, setRunModel, setModelLoading, modelLoading } = useContext(FilterContext);
     const { modelName, visualizations } = modelConfig;
     const [data, setData] = useState([]);
     const [defaultData, setDefaultData] = useState([]);
+    const [compareScenario, setCompareScenario] = useState("default");
 
     // Load model result data
-    const reload = useCallback(() => {
+    const executeModel = useCallback(() => {
         setRunModel(false);
-        setLoading(true);
+        // setLoading(true);
+        setModelLoading(true);
         Api.runModel(modelName, filter)
             .then((response) => {
                 if (response.status !== 200) {
@@ -36,13 +36,16 @@ function ResultTab({ tabTitle }) {
                 }
             })
             .catch((error) => console.error(error))
-            .finally(() => setLoading(false));
-    }, [filter, modelName, setRunModel, setLoading, loadedDisplayParameters, updateDisplayParameters, setLoadedDisplayParameters]);
+            .finally(() => {
+                setModelLoading(false);
+            });
+    }, [filter, modelName, setRunModel, setModelLoading, loadedDisplayParameters, updateDisplayParameters, setLoadedDisplayParameters]);
 
     useEffect(() => {
-        if (!runModel) return console.debug("Postponing update until manual model execution");
-        reload();
-    }, [reload, runModel])
+        // if (!runModel) return console.debug("Postponing update until manual model execution");
+        if (!runModel) return;
+        executeModel();
+    }, [executeModel, runModel])
 
     // Create chart elements for dashboard
     var charts = useMemo(() => {
@@ -142,32 +145,44 @@ function ResultTab({ tabTitle }) {
     }, [data]);
 
     // Load results from default scenario
-    useEffect(() => {
-        if (!scenarios || !scenarios.default) return console.debug("No default scenario available", scenarios);
-        setTimeout(() => {
-            axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/model/${modelName}`, scenarios.default)
-                .then(function (response) {
-                    if (response.status !== 200) {
-                        throw new Error("Error loading default model scenario")
-                    }
-                    setDefaultData(response.data)
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
-        }, 5000)
-    }, [scenarios, modelName])
+    useEffect(function _loadCompareScenario() {
+        if (!scenarios || !scenarios[compareScenario] || modelLoading) return;
+        Api.runModel(modelName, scenarios[compareScenario])
+            .then(function _handleResponse(response) {
+
+                if (response.status !== 200) {
+                    throw new Error(`Error loading "${compareScenario}" scenario`)
+                }
+                setDefaultData(response.data);
+                // console.log(response.data);
+
+                let tmpScenarios = {...scenarios}
+                Api.setScenarios(modelName, tmpScenarios)
+                    .then(function _handleResponse(res) {
+                        console.debug(`Saved scenario "${compareScenario}"`);
+                    })
+                    .catch(function _handleError(err) {
+                        console.error(err);
+                    })
+            })
+            .catch(function _handleError(error) {
+                console.error(error);
+            });
+
+    }, [scenarios, modelName, compareScenario, setDefaultData, modelLoading])
 
     return (
         <>
-            <h3>{tabTitle}</h3>
+            <h3 className="mb-3">{tabTitle}</h3>
             <ButtonToolbar>
                 <ButtonGroup key="bg-run" className="me-2">
                     <Button size="sm" onClick={() => setRunModel(true)}>Run model</Button>
                 </ButtonGroup>
                 <ButtonGroup key="bg-scenario" className="me-2">
                     <DropdownButton size="sm" id="dropdown-basic" title="Compare to:">
-                        {Object.keys(scenarios).map(scenarioName => (<Dropdown.Item key={`dd-item-${scenarioName}`}>{scenarioName}</Dropdown.Item>))}
+                        {Object.keys(scenarios).map(scenarioName => (
+                            <Dropdown.Item key={`dd-item-${scenarioName}`} onClick={() => setCompareScenario(scenarioName)}>{scenarioName}</Dropdown.Item>
+                        ))}
                     </DropdownButton>
                 </ButtonGroup>
                 <ButtonGroup key="bg-download" className="me-2">
@@ -175,7 +190,7 @@ function ResultTab({ tabTitle }) {
                 </ButtonGroup>
             </ButtonToolbar>
             <Modal
-                show={loading}
+                show={modelLoading}
                 centered
                 backdrop="static"
             >

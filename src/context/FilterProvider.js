@@ -12,6 +12,8 @@ export function FilterProvider({ children }) {
     const [displayParameters, setDisplayParameters] = useState([]);
     const [modelConfig, setModelConfig] = useState(null);
     const [scenarios, setScenarios] = useState([]);
+    const [runModel, setRunModel] = useState(true);
+    const [modelLoading, setModelLoading] = useState(false);
 
     const updateFilter = useCallback((key, value) => {
         setFilter(prevFilter => {
@@ -34,7 +36,6 @@ export function FilterProvider({ children }) {
         Api.set(newModelConfig.modelName, "config", newModelConfig)
         .then(function _handleResponse(res){
             setModelConfig(newModelConfig);
-            console.debug('Updated', res);
         })
         .catch(function handleError(err) {
             console.error(err);
@@ -57,7 +58,11 @@ export function FilterProvider({ children }) {
         updateModelConfig,
         modelConfig,
         updateScenarios: setScenarios,
-        scenarios
+        scenarios,
+        setRunModel,
+        runModel,
+        setModelLoading,
+        modelLoading
     }
 
     return (

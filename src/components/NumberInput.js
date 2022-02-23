@@ -9,6 +9,7 @@ function NumberInput({ label, defaultValue, min, max, step, parameter }) {
     const { updateFilter } = useContext(FilterContext);
 
     useEffect(()=>{
+        console.log("Updating inside number input", parameter, defaultValue);
         updateFilter(parameter, defaultValue)
     }, [updateFilter, parameter, defaultValue])
 

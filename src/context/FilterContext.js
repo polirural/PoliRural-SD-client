@@ -12,7 +12,11 @@ const FilterContext = createContext({
     updateDisplayParameters: (b) => true,
     displayParameters: [],
     updateModelConfig: (b) => true,
-    modelConfig: null
+    modelConfig: null,
+    setRunModel: ()=>true,
+    runModel: true,
+    setModelLoading: ()=>true,
+    modelLoading: false
 });
 
 export default FilterContext;

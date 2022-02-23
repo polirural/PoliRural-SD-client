@@ -3,7 +3,7 @@ import { Button, Card, Col, Container, Row } from "react-bootstrap"
 import { models } from './App';
 import { useMemo } from 'react';
 
-export function HomeView(props) {
+export function HomeView() {
 
     const modelViews = useMemo(() => {
         return Object.keys(models).map((modelKey, modelIdx) => {
@@ -33,7 +33,7 @@ export function HomeView(props) {
             <p>This is the landing page for the System Dynamics Tool prototype developed through the Polirural project. The purpose of this tool is to leverage the access to System Dynamics simulations for non-experts involved in foresight analysis, policy and strategy formulation for rural communities.</p>
             <p>The models have been developed collectively by all pilot regions partaking in the project and have been practically implemented by 22Sistema.</p>
             <p>This tool has been developed in cooperation between 22Sistema, Asplan Viak with key contributions from other partners including BOSC</p>
-            <h4>Select one of the following models to get started</h4>
+            <h4 className="my-3">Select one of the following models to get started</h4>
             <Row>
                 {modelViews}
             </Row>

@@ -2,9 +2,9 @@ import './DrawLineChart.scss';
 
 import * as d3 from 'd3';
 
-import Curve, {curveTypes} from './../utils/Curve';
+import Curve, { curveTypes } from './../utils/Curve';
 import { Dropdown, Form, Row } from 'react-bootstrap';
-import React, { useCallback, useContext, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 
 import FilterContext from '../context/FilterContext';
 import PropTypes from 'prop-types';
@@ -16,26 +16,31 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
 
     const [data, setData] = useState([]);
 
+    useEffect(function _setDefaultData() {
+        setData(defaultData);
+    }, [defaultData])
+
     const buildSeries = useCallback((coords) => {
         var series = {
             index: [],
             data: []
         }
         coords.forEach(a => {
-            if (a.x0 && a.y0) { 
+            if (a.x0 && a.y0) {
                 series.index.push(a.x0);
                 series.data.push(+numberFormat(a.y0));
             } else {
                 series.index.push(a.x);
-                series.data.push(+numberFormat(a.y));                
+                series.data.push(+numberFormat(a.y));
             }
         })
         return series;
     }, [numberFormat]);
-    
+
     const genCurve = useCallback((curveType) => {
         curveType = curveType !== undefined ? curveType : curveTypes.flat50;
         const d = Curve(curveType, xRange, yRange);
+        console.log(d);
         setData(d);
         updateFilter(parameter, buildSeries(d))
     }, [xRange, yRange, parameter, updateFilter, buildSeries])
@@ -122,9 +127,16 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
         var coords = [];
 
         var _onMoveTimeout = null;
+        
+        const drawTempLine = (coords) => {
+            if (!Array.isArray(coords)) return;
+            svg
+                .select(".temp-line")
+                .attr("d", tempLine(coords));
+        }
 
-        const onDrag = (evt) => {
-            evt.preventDefault()
+        const onDrag = (event) => {
+            event.preventDefault()
             return null;
         }
 
@@ -146,28 +158,32 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
                     })
                 }
                 clearTimeout(_onMoveTimeout);
-                svg
-                    .select(".temp-line")
-                    .attr("d", tempLine(coords));
+                // svg
+                //     .select(".temp-line")
+                //     .attr("d", tempLine(coords));
                 _onMoveTimeout = setTimeout(() => {
+                    drawTempLine(coords)
                 }, 1)
             }
         }
 
-        const onDown = () => {
+
+        const onDown = (event) => {
             coords.length = 0;
             state = true;
         }
 
         let _onUpOutTimeout = null;
 
-        const onUpOut = (e) => {
+        const onUpOut = (event) => {
             clearTimeout(_onUpOutTimeout);
-            _onUpOutTimeout = setTimeout(() => {
+            _onUpOutTimeout = setTimeout(function _onUpOut() {
                 if (state) {
                     state = false;
+                    drawTempLine([]);                    
                     setData(coords);
                     updateFilter(parameter, buildSeries(coords))
+                    // console.log(coords, buildSeries(coords));
                 }
             }, 50)
         }
@@ -211,9 +227,19 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
                         Use template
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                        {Object.keys(curveTypes).map((key, idx) => {
-                            return <Dropdown.Item key={`dd-item-${idx}`} onClick={() => genCurve(curveTypes[key])}>{curveTypes[key]}</Dropdown.Item>
-                        })}
+                        {Object.keys(curveTypes)
+                            .map(function _forEachCurveType(key, idx) {
+                                return (
+                                    <Dropdown.Item
+                                        key={`dd-item-${idx}`}
+                                        onClick={function _onSelectCurveType() {
+                                            return genCurve(curveTypes[key])
+                                        }}>
+                                        {curveTypes[key]}
+                                    </Dropdown.Item>
+                                )
+                            })
+                        }
                     </Dropdown.Menu>
                 </Dropdown>
             </Row>

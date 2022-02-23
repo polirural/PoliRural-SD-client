@@ -5,19 +5,19 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import HomeView from './HomeView';
 import { LinkContainer } from 'react-router-bootstrap';
-import VidzemeWizard from './VidzemeWizard';
-import { useEffect } from 'react';
+import WizardView from './WizardView';
+import { useEffect, useMemo } from 'react';
 import Api from './utils/Api';
 import FilterProvider from './context/FilterProvider';
 
 export const models = {
-  "central_greece_v2_p": { name: "Central Greece", component: <VidzemeWizard />, image: './images/central-greece.jpg' },
-  "flanders_land_use_p.py": { name: "Flanders", component: <VidzemeWizard />, image: './images/flanders.jpg' },
-  "gevgelija_v2_p": { name: "Gevgelija", component: <VidzemeWizard />, image: './images/gevgelija.jpg' },
-  "hame_v2_p": { name: "Hame", component: <VidzemeWizard />, image: './images/hame.jpg' },
-  "monaghan_v2_p": { name: "Monaghan", component: <VidzemeWizard />, image: './images/monaghan.jpg' },
-  "segobriga_v2_p": { name: "Segobriga", component: <VidzemeWizard />, image: './images/segobriga.jpg' },
-  "vidzeme_v2_p": { name: "Vidzeme", component: <VidzemeWizard />, image: './images/vidzeme.jpg' }
+  "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg' },
+  "flanders_land_use_p.py": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg' },
+  "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg' },
+  "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg' },
+  "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg' },
+  "segobriga_v2_p": { name: "Segobriga", component: <WizardView />, image: './images/segobriga.jpg' },
+  "vidzeme_v2_p": { name: "Vidzeme", component: <WizardView />, image: './images/vidzeme.jpg' }
 }
 
 function App() {
@@ -27,6 +27,24 @@ function App() {
       await Api.set("test", "last-login", new Date())
     }
     update();
+  }, [])
+
+  const modelNavDropdownItems = useMemo(function _generateModels() {
+    return Object.keys(models).map((k, i) => {
+      return (
+        <LinkContainer key={`link-container-${i}`} to={k}>
+          <NavDropdown.Item>{models[k].name}</NavDropdown.Item>
+        </LinkContainer>
+      )
+    })
+  }, [])
+
+  const modelRoutes = useMemo(function _generateModelRoutes() {
+    return Object.keys(models).map((k, i) => {
+      return (
+        <Route path={`/${k}`} key={`model-route-${i}`} element={models[k].component} />
+      )
+    })
   }, [])
 
   return (
@@ -42,13 +60,7 @@ function App() {
                   <Nav.Link href="#home">Back to Polirural DIH</Nav.Link>
                   <Nav.Link href="#home">About</Nav.Link>
                   <NavDropdown title="Choose model" id="basic-nav-dropdown">
-                    {Object.keys(models).map((k, i) => {
-                      return (
-                        <LinkContainer key={`link-container-${i}`} to={k}>
-                          <NavDropdown.Item>{models[k].name}</NavDropdown.Item>
-                        </LinkContainer>
-                      )
-                    })}
+                    {modelNavDropdownItems}
                   </NavDropdown>
                 </Nav>
               </Navbar.Collapse>
@@ -57,11 +69,7 @@ function App() {
           <Row>
             <Routes>
               <Route index element={<HomeView />} />
-              {Object.keys(models).map((k, i) => {
-                return (
-                  <Route path={`/${k}`} key={`model-route-${i}`} element={models[k].component} />
-                )
-              })}
+              {modelRoutes}
             </Routes>
           </Row>
         </Container>
