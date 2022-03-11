@@ -17,10 +17,19 @@ export function EditTitle({ save, show, cancel, data }) {
         }))
     }, [])
 
+    const handleOnShow = useCallback(
+      () => {
+        setFormData(data);
+      },
+      [data],
+    )
+    
+
     return (
         <Modal
             show={show}
             onHide={cancel}
+            onShow={handleOnShow}
             backdrop="static"
             className="custom-dialog"
             size="xl"

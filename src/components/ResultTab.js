@@ -40,11 +40,6 @@ function ResultTab({ tabTitle }) {
             });
     }, [filter, modelName, setRunModel, setModelLoading, loadedDisplayParameters, updateDisplayParameters, setLoadedDisplayParameters]);
 
-    useEffect(() => {
-        if (!runModel) return;
-        executeModel();
-    }, [executeModel, runModel])
-
     // Create chart elements for dashboard
     var charts = useMemo(() => {
         if (data.length === 0) return null;
@@ -143,7 +138,10 @@ function ResultTab({ tabTitle }) {
 
     // Load results from comparison scenario
     const loadCompareScenario = useCallback(function _loadCompareScenario(scenarioName) {
-        if (!scenarios || !scenarios[scenarioName] || modelLoading) return;
+        if (!scenarios || !scenarios[scenarioName] || modelLoading) {
+            console.log(scenarios);
+            return;
+        };
         Api.runModel(modelName, scenarios[scenarioName])
             .then(function _handleResponse(response) {
                 setDefaultData(response.data);
@@ -166,6 +164,14 @@ function ResultTab({ tabTitle }) {
             return scenarioName
         })
     }, [loadCompareScenario]);
+
+    useEffect(() => {
+        if (!runModel) return;
+        if (defaultData.length === 0 && compareScenario) {
+            loadCompareScenario(compareScenario);
+        }
+        executeModel();
+    }, [executeModel, runModel, compareScenario, loadCompareScenario, defaultData])
 
     return (
         <>

@@ -17,7 +17,7 @@ export function SavedScenariosTab({ tabTitle }) {
             var tmpScenarios = { ...currentScenarios };
             tmpScenarios[name] = newScenarioDefn;
             updateScenarios(tmpScenarios);
-            Api.set(modelName, "saved-scenarios", tmpScenarios)
+            Api.setScenarios(modelName, tmpScenarios)
                 .then(res => {
                     console.debug("Saved scenario", res);
                 })
@@ -38,7 +38,7 @@ export function SavedScenariosTab({ tabTitle }) {
         updateScenarios(currentScenarios => {
             let tmpScenarios = { ...currentScenarios };
             delete tmpScenarios[scenarioName];
-            Api.set(modelName, "saved-scenarios", tmpScenarios)
+            Api.setScenarios(modelName, tmpScenarios)
                 .then(function _handleResponse(res) {
                     console.log("Updated scenarios after delete");
                 })
@@ -50,19 +50,33 @@ export function SavedScenariosTab({ tabTitle }) {
 
     }, [updateScenarios, modelName]);
 
+    const createDefaultScenario = useCallback(
+        () => {
+            let defaultScenario = { default: {} };
+            Api.setScenarios(modelName, defaultScenario).then(res => {
+                updateScenarios(defaultScenario);
+            })
+        },
+        [modelName, updateScenarios],
+    )
+
     useEffect(function _loadSavedScenarios() {
-        Api.get(modelName, "saved-scenarios")
+        Api.getScenarios(modelName)
             .then(function _handleResponse(res) {
                 if (!res.data || !res.data.value) {
-                    throw new Error("No saved scenario data");
+                    createDefaultScenario();
+                } else {
+                    updateScenarios(res.data.value);
                 }
-                updateScenarios(res.data.value);
             })
             .catch(function _handleError(err) {
                 console.error("Error loading scenarios", err);
+                createDefaultScenario();
             });
 
-    }, [updateScenarios, modelName]);
+    }, [updateScenarios, modelName, createDefaultScenario]);
+
+
 
     return (
         <>
