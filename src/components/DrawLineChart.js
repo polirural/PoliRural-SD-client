@@ -40,7 +40,6 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
     const genCurve = useCallback((curveType) => {
         curveType = curveType !== undefined ? curveType : curveTypes.flat50;
         const d = Curve(curveType, xRange, yRange);
-        console.log(d);
         setData(d);
         updateFilter(parameter, buildSeries(d))
     }, [xRange, yRange, parameter, updateFilter, buildSeries])
@@ -183,7 +182,6 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, parameter
                     drawTempLine([]);                    
                     setData(coords);
                     updateFilter(parameter, buildSeries(coords))
-                    // console.log(coords, buildSeries(coords));
                 }
             }, 50)
         }

@@ -6,6 +6,7 @@ import FilterContext from "./FilterContext";
 export function FilterProvider({ children }) {
 
     const [filter, setFilter] = useState({});
+    const [auth, setAuth] = useState(Api.authorized());
     const [defaultFilter, setDefaultFilter] = useState({});
     const [showHelp, setShowHelp] = useState(true);
     const [inputParameters, setInputParameters] = useState([]);
@@ -13,7 +14,7 @@ export function FilterProvider({ children }) {
     const [modelConfig, setModelConfig] = useState(null);
     const [scenarios, setScenarios] = useState([]);
     const [runModel, setRunModel] = useState(true);
-    const [modelLoading, setModelLoading] = useState(false);
+    const [modelLoading, setModelLoading] = useState(null);
 
     const updateFilter = useCallback((key, value) => {
         setFilter(prevFilter => {
@@ -44,25 +45,45 @@ export function FilterProvider({ children }) {
     }, [setModelConfig]);
 
     const providerValue = {
+        // The scenario filters
         updateFilter,
         replaceFilter: setFilter,
         filter,
+        // The compare scenario filter
         updateDefaultFilter,
         defaultFilter,
+
+        // The boolean flag that determines if to show help 
         setShowHelp,
         showHelp,
+
+        // The list of available input parameters to the model
         updateInputParameters: setInputParameters,
         inputParameters,
+
+        // The list of available output parameters from the model
         updateDisplayParameters: setDisplayParameters,
         displayParameters,
+
+        // The model configuration
         updateModelConfig,
         modelConfig,
+
+        // The stored model scenarios
         updateScenarios: setScenarios,
         scenarios,
+
+        // Flag to determine whether to run model
         setRunModel,
         runModel,
+
+        // Flag to determine if model is presently loading
         setModelLoading,
-        modelLoading
+        modelLoading,
+
+        // Session authentication state
+        setAuth,
+        auth
     }
 
     return (

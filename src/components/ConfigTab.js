@@ -3,12 +3,14 @@ import { useCallback, useContext, useMemo, useState } from 'react';
 import { Button, Table } from 'react-bootstrap';
 import { Trash, Pen, Plus } from 'react-bootstrap-icons';
 import FilterContext from '../context/FilterContext';
-import DisplayParameter from './DisplayParameter';
-import InputParameter from './InputParameter';
+import { DisplayParameter } from './DisplayParameter';
+import { InputParameter } from './InputParameter';
+import EditTitle from './EditTitle';
 
 function ConfigTab({ tabTitle }) {
 
     const { modelConfig, updateModelConfig, inputParameters, displayParameters } = useContext(FilterContext);
+    const [editModelTitle, setEditModelTitle] = useState(false)
     const [editInputParameter, setEditInputParameter] = useState(false)
     const [editDisplayParameter, setEditDisplayParameter] = useState(false)
     const [selectedParameter, setSelectedParameter] = useState(null)
@@ -16,62 +18,87 @@ function ConfigTab({ tabTitle }) {
     const deleteInputParameter = useCallback(function _deleteInputParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the input parameter "${paramName}" from the model configuration?`)) return;
 
-        updateModelConfig(modelConfig => {
-            var tmpParameters = { ...modelConfig.parameters }
-            delete tmpParameters[paramName];
-            modelConfig.parameters = tmpParameters;
-        });
+        var tmpModelConfig = { ...modelConfig }
+        delete tmpModelConfig.parameters[paramName];
+        updateModelConfig(tmpModelConfig);
+        return tmpModelConfig;
 
-    }, [updateModelConfig])
+    }, [updateModelConfig, modelConfig])
 
     const deleteDisplayParameter = useCallback(function _deleteDisplayParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the display parameter "${paramName}" from the model configuration?`)) return;
 
-        updateModelConfig(modelConfig => {
-            var tmpModelConfig = { ...modelConfig }
-            delete tmpModelConfig.visualizations[paramName];
-            updateModelConfig(tmpModelConfig);
-        });
+        var tmpModelConfig = { ...modelConfig }
+        delete tmpModelConfig.visualizations[paramName];
+        updateModelConfig(tmpModelConfig);
+        return tmpModelConfig;
 
-    }, [updateModelConfig])
+    }, [updateModelConfig, modelConfig])
 
     const addUpdateInputParameter = useCallback(function _addUpdateInputParameter(paramName, newParamDefn) {
 
         if (modelConfig.parameters[paramName] && !window.confirm(`Are you sure you want to update the existing field "${paramName}" in the model configuration?`)) return;
 
-        updateModelConfig(modelConfig => {
-            var tmpConfig = { ...modelConfig }
-            var tmpParams = { ...tmpConfig.parameters }
-            tmpParams[paramName] = newParamDefn;
-            tmpConfig.parameters = tmpParams;
-            setEditInputParameter(false);
-            setSelectedParameter(null);
-            updateModelConfig(tmpConfig);
-        });
+        var tmpConfig = { ...modelConfig }
+        var tmpParams = { ...tmpConfig.parameters, ...newParamDefn }
+        if (Object.keys(newParamDefn).indexOf(paramName) === -1) {
+            delete tmpParams[paramName];
+        }
+        tmpConfig.parameters = tmpParams;
+        setEditInputParameter(false);
+        setSelectedParameter(null);
+        updateModelConfig(tmpConfig);
+        return tmpConfig;
 
-    }, [updateModelConfig, modelConfig.parameters, setEditInputParameter, setSelectedParameter])
+    }, [updateModelConfig, modelConfig])
 
     const addUpdateDisplayParameter = useCallback(function _addUpdateDisplayParameter(paramName, newParamDefn) {
         if (modelConfig.visualizations[paramName] && !window.confirm(`Are you sure you want to update the existing display parameter "${paramName}" in the model configuration?`)) return;
-        updateModelConfig(modelConfig => {
-            var tmpConfig = { ...modelConfig }
-            delete tmpConfig.visualizations[paramName];
-            for (const [key, val] of Object.entries(newParamDefn)) {
-                tmpConfig["visualizations"][key] = val;
-            }
-            setEditDisplayParameter(false);
-            setSelectedParameter(null);
-            updateModelConfig(tmpConfig);
-        });
+        var tmpModelConfig = { ...modelConfig }
+        var tmpVisualizations = { ...tmpModelConfig.visualizations, ...newParamDefn }
+        if (Object.keys(newParamDefn).indexOf(paramName) === -1) {
+            delete tmpVisualizations[paramName];
+        }
+        tmpModelConfig.visualizations = tmpVisualizations;
+        setEditDisplayParameter(false);
+        setSelectedParameter(null);
+        updateModelConfig(tmpModelConfig);
+        return tmpModelConfig;
 
-    }, [updateModelConfig, modelConfig.visualizations, setEditDisplayParameter, setSelectedParameter])
+    }, [updateModelConfig, modelConfig])
 
+    /**
+     * Modal dialogue for editing model title
+     */
+    const editTitleModal = useMemo(function _editTitleModal() {
+        return (
+            <EditTitle
+                data={{ title: modelConfig.title }}
+                show={editModelTitle}
+                save={(data) => {
+                    setEditModelTitle(false);
+                    updateModelConfig({
+                        ...modelConfig,
+                        title: data.title
+                    });
+                }}
+                cancel={() => {
+                    setEditModelTitle(false);
+                }}
+            />
+        )
+    }, [modelConfig, updateModelConfig, editModelTitle])
+
+    /**
+     * Modal dialogue for editing model input parameters
+     */
     const editInputParamsModal = useMemo(function _editInputParamsModal() {
         return (
             <InputParameter
                 key={`edit-input-parameter-${selectedParameter}`}
-                save={(newParamDefn) => {
-                    addUpdateInputParameter(selectedParameter, newParamDefn)
+                save={(newParamDefn, newParameter) => {
+                    setEditInputParameter(false);
+                    addUpdateInputParameter(selectedParameter, newParamDefn);
                 }}
                 inputParameters={inputParameters}
                 show={editInputParameter}
@@ -86,11 +113,15 @@ function ConfigTab({ tabTitle }) {
         )
     }, [editInputParameter, selectedParameter, inputParameters, modelConfig, addUpdateInputParameter]);
 
+    /**
+     * Modal dialogue for editing model display parameters (visualizations)
+     */
     const editDisplayParamsModal = useMemo(function _editDisplayParamsModal() {
         return (
             <DisplayParameter
                 key={`edit-display-parameter-${selectedParameter}`}
                 save={(newParamDefn) => {
+                    setEditDisplayParameter(false);
                     addUpdateDisplayParameter(selectedParameter, newParamDefn)
                 }}
                 displayParameters={displayParameters}
@@ -115,7 +146,10 @@ function ConfigTab({ tabTitle }) {
                     <td className="td-40">{parameterData["title"]}</td>
                     <td className="td-40">{parameterName}</td>
                     <td className="td-10">
-                        <Button variant="primary" size="sm" onClick={() => setEditInputParameter(true)}><Pen /> Edit</Button>
+                        <Button variant="primary" size="sm" onClick={() => {
+                            setEditInputParameter(true);
+                            setSelectedParameter(parameterName)
+                        }}><Pen /> Edit</Button>
                     </td>
                     <td className="td-10">
                         <Button variant="danger" size="sm" onClick={() => deleteInputParameter(parameterName)}><Trash /> Delete</Button>
@@ -134,7 +168,10 @@ function ConfigTab({ tabTitle }) {
                     <td className="td-40">{parameterName}</td>
                     <td className="td-40">{parameterData}</td>
                     <td className="td-10">
-                        <Button variant="primary" size="sm" onClick={() => setEditDisplayParameter(true)}><Pen /> Edit</Button>
+                        <Button variant="primary" size="sm" onClick={() => {
+                            setEditDisplayParameter(true);
+                            setSelectedParameter(parameterName);
+                        }}><Pen /> Edit</Button>
                     </td>
                     <td className="td-10">
                         <Button variant="danger" size="sm" onClick={() => deleteDisplayParameter(parameterName)}><Trash /> Delete</Button>
@@ -146,10 +183,13 @@ function ConfigTab({ tabTitle }) {
 
     return (
         <>
-            <h3>{tabTitle}</h3>
-            {editInputParamsModal}
-            {editDisplayParamsModal}
-            <h4>Input parameters</h4>
+            <h3 className="my-3">{tabTitle}</h3>
+            <h4 className="my-3">Model title</h4>
+            <p>{modelConfig.title}</p>
+            <Button onClick={() => {
+                setEditModelTitle(true);
+            }}><Plus /> Edit model title</Button>
+            <h4 className="my-3">Input parameters</h4>
             <p>These are the parameters that are shown on the left side of the screen that are used as input to a model execution</p>
             <Button onClick={() => {
                 setEditInputParameter(true);
@@ -167,7 +207,7 @@ function ConfigTab({ tabTitle }) {
                     {Array.isArray(inputParamRows) && (inputParamRows)}
                 </tbody>
             </Table>
-            <h4>Display parameters</h4>
+            <h4 className="my-3">Display parameters</h4>
             <p>These are the parameters that are displayed in charts and tables when the model is run</p>
             <Button onClick={() => {
                 setEditDisplayParameter(true);
@@ -185,7 +225,9 @@ function ConfigTab({ tabTitle }) {
                     {Array.isArray(displayParamRows) && (displayParamRows)}
                 </tbody>
             </Table>
-            {/* <pre style={{ "overflowX": "hidden" }}>{JSON.stringify(modelConfig, null, 2)}</pre> */}
+            {editInputParamsModal}
+            {editDisplayParamsModal}
+            {editTitleModal}
         </>
     )
 }

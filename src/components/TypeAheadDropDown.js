@@ -1,81 +1,85 @@
 // TypeAheadDropDown.js
 import './TypeAheadDropDown.css'
-import React from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useMemo } from 'react';
 
+export function TypeAheadDropDown({ placeholder, name, items, onChange, value }) {
 
-class TypeAheadDropDown extends React.Component {
+  const typeAheadRef = useRef();
+  const [suggestions, setSuggestions] = useState([]);
+  const [currentValue, setCurrentValue] = useState(value);
 
-  constructor(props) {
-    super(props);
-    this.state = {
-      suggestions: [],
-      text: ''
+  const onTextChange = useCallback(function _onTextChange(event) {
+    let tmpValue = event.target.value;
+    if (tmpValue.length > 0) {
+      const regex = new RegExp(`^${tmpValue}`, `i`);
+      let suggestions = items.sort().filter(v => regex.test(v));
+      setSuggestions(suggestions);
+    } else {
+      setSuggestions([]);
     }
-  }
+    setCurrentValue(tmpValue);
+  }, [items]);
+  
+  const handleSelectSuggestion = useCallback(function _handleSelectSuggestion(suggestion) {
+    setCurrentValue(suggestion);
+    setSuggestions([]);
+  }, [])
+  
+  useEffect(function _handleOnChangeParent() {
+    onChange({
+      target: {
+        name: typeAheadRef.current.name,
+        type: typeAheadRef.current.type,
+        value: currentValue
+      }
+    })
+  }, [onChange, currentValue]);
 
-  onTextChange = (e) => {
-    const { items, name } = this.props;
-    let suggestions = [];
-    const value = e.target.value;
-    if (value.length > 0) {
-      const regex = new RegExp(`^${value}`, `i`);
-      suggestions = items.sort().filter(v => regex.test(v));
-    }
-
-
-    this.setState(() => ({
-      suggestions,
-      text: value,
-      name: name
-    }));
-  }
-
-
-  suggestionSelected = (value) => {
-    console.log(value);
-    this.setState(() => ({
-      text: value,
-      suggestions: []
-    }))
-  }
-
-  renderSuggestions = () => {
-    const { suggestions } = this.state;
+  const suggestionItems = useMemo(() => {
     if (suggestions.length === 0) {
       return null;
     }
     return (
       <ul>
-        {suggestions.map(suggestion => <li key={`suggestion-${suggestion}`} onClick={(e) => this.suggestionSelected(suggestion)}>{suggestion}</li>)}
+        {suggestions.map(suggestion => (
+          <li key={`suggestion-${suggestion}`} onClick={() => handleSelectSuggestion(suggestion)}>
+            {suggestion}
+          </li>))}
       </ul>
     )
-  }
+  }, [suggestions, handleSelectSuggestion]);
 
-
-  render() {    
-    const { text } = this.state
-    const {placeholder, name} = this.props;
-
-    return (
-      <div className="TypeAheadDropDown">
-        <input onChange={this.onTextChange} placeholder={placeholder} name={name} value={text} type="text" autoComplete="off" />
-        {this.renderSuggestions()}
-      </div>
-    );
-  }
+  return (
+    <div className="TypeAheadDropDown" >
+      <input
+        ref={typeAheadRef}
+        onChange={onTextChange}
+        placeholder={placeholder}
+        name={name}
+        value={value}
+        type="text"
+        autoComplete="off" />
+      <ul>
+        {suggestionItems}
+      </ul>
+    </div >
+  );
 
 }
 
 TypeAheadDropDown.defaultProps = {
   placeholder: PropTypes.string,
   name: PropTypes.string,
-  items: PropTypes.arrayOf(PropTypes.any).isRequired
+  items: PropTypes.arrayOf(PropTypes.any).isRequired,
+  onChange: PropTypes.func.isRequired
 }
 
 TypeAheadDropDown.defaultProps = {
-  placeholder:"...",
-  name: "typeahead-input-field"
+  placeholder: "...",
+  name: "typeahead-input-field",
+  onChange: (event) => console.debug("onChange not supplied", event)
 }
 
 export default TypeAheadDropDown;

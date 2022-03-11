@@ -6,13 +6,15 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import HomeView from './HomeView';
 import { LinkContainer } from 'react-router-bootstrap';
 import WizardView from './WizardView';
-import { useEffect, useMemo } from 'react';
+import { useContext, useEffect, useMemo } from 'react';
 import Api from './utils/Api';
-import FilterProvider from './context/FilterProvider';
+import LoginView from './LoginView';
+import ProtectedRoute from './components/ProtectedRoute';
+import FilterContext from './context/FilterContext';
 
 export const models = {
   "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg' },
-  "flanders_land_use_p.py": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg' },
+  "flanders_land_use_p": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg' },
   "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg' },
   "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg' },
   "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg' },
@@ -21,6 +23,8 @@ export const models = {
 }
 
 function App() {
+
+  const { auth } = useContext(FilterContext);
 
   useEffect(() => {
     async function update() {
@@ -42,39 +46,64 @@ function App() {
   const modelRoutes = useMemo(function _generateModelRoutes() {
     return Object.keys(models).map((k, i) => {
       return (
-        <Route path={`/${k}`} key={`model-route-${i}`} element={models[k].component} />
+        <Route
+          key={`model-route-${i}`}
+          path={`/${k}`}
+          element={
+            <ProtectedRoute>
+              {models[k].component}
+            </ProtectedRoute>
+          } />
       )
     })
   }, [])
 
   return (
-    <FilterProvider>
-      <Router basename={`${process.env.PUBLIC_URL}`}>
-        <Container fluid>
-          <Navbar bg="primary" variant="dark" expand="lg" sticky="top">
-            <Container fluid>
-              <Navbar.Brand href="./">Polirural System Dynamics Tool</Navbar.Brand>
-              <Navbar.Toggle aria-controls="basic-navbar-nav" />
-              <Navbar.Collapse id="basic-navbar-nav">
-                <Nav className="ms-auto">
-                  <Nav.Link href="#home">Back to Polirural DIH</Nav.Link>
-                  <Nav.Link href="#home">About</Nav.Link>
-                  <NavDropdown title="Choose model" id="basic-nav-dropdown">
-                    {modelNavDropdownItems}
-                  </NavDropdown>
-                </Nav>
-              </Navbar.Collapse>
-            </Container>
-          </Navbar>
-          <Row>
-            <Routes>
-              <Route index element={<HomeView />} />
-              {modelRoutes}
-            </Routes>
-          </Row>
-        </Container>
-      </Router>
-    </FilterProvider>
+    <Router basename={`${process.env.PUBLIC_URL}`}>
+      <Container fluid>
+        <Navbar bg="primary" variant="dark" expand="lg" sticky="top">
+          <Container fluid>
+            <Navbar.Brand href="./">Polirural System Dynamics Tool</Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="ms-auto">
+                <LinkContainer to="/">
+                  <Nav.Link>Home</Nav.Link>
+                </LinkContainer>
+                {!auth && (
+                  <LinkContainer to="/login">
+                    <Nav.Link>Login</Nav.Link>
+                  </LinkContainer>
+                )}
+                {auth && (
+                  <LinkContainer to="/logout">
+                    <Nav.Link>Logout</Nav.Link>
+                  </LinkContainer>
+                )}
+                <NavDropdown title="Select model" id="basic-nav-dropdown">
+                  {modelNavDropdownItems}
+                </NavDropdown>
+              </Nav>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
+        <Row>
+          <Routes>
+            <Route
+              index
+              element={
+                <ProtectedRoute key="home-route">
+                  <HomeView />
+                </ProtectedRoute>
+              }
+            />
+            <Route path={`/login`} key={`login-route`} element={<LoginView />} />
+            <Route path={`/logout`} key={`logout-route`} element={<LoginView logout={true} />} />
+            {modelRoutes}
+          </Routes>
+        </Row>
+      </Container>
+    </Router>
   );
 }
 

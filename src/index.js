@@ -4,10 +4,13 @@ import App from './App';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import reportWebVitals from './reportWebVitals';
+import FilterProvider from './context/FilterProvider';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <FilterProvider>
+      <App />
+    </FilterProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );

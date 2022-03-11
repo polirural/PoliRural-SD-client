@@ -15,4 +15,8 @@ WizardPage.propTypes = {
     title: PropTypes.string.isRequired
 }
 
+WizardPage.defaultProps = {
+    title: 'N/A'
+}
+
 export default WizardPage;

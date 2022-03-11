@@ -4,12 +4,12 @@ class Api {
 
     // Basic set
     static set(model, key, value) {
-        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/storage/set/${model}/${key}`, value);
+        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/sdm/storage/${model}/${key}`, value);
     }
     
     // Basic get
     static get(model, key) {
-        return axios.get(`${process.env.REACT_APP_SDM_API_ENDPOINT}/storage/get/${model}/${key}`);
+        return axios.get(`${process.env.REACT_APP_SDM_API_ENDPOINT}/sdm/storage/${model}/${key}`);
     }
 
     // Utility methods get/set
@@ -45,11 +45,39 @@ class Api {
 
     // Model execution and doc services
     static getDoc(modelName) {
-        return axios.get(`${process.env.REACT_APP_SDM_API_ENDPOINT}/model/${modelName}/doc`);
+        return axios.get(`${process.env.REACT_APP_SDM_API_ENDPOINT}/sdm/model/${modelName}/doc`);
     }
 
     static runModel(modelName, filter) {
-        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/model/${modelName}`, filter);
+        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/sdm/model/${modelName}`, filter);
+    }
+
+    static doLogin(authRequest) {
+        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/auth/login`, authRequest);
+    }
+
+    // Session storage
+    static sessionSet(key, val) {
+        sessionStorage.setItem(key, JSON.stringify(val))
+        return;
+    }
+
+    static sessionGet(key) {
+        return JSON.parse(sessionStorage.getItem(key))
+    }
+
+    /**
+     * Set or get authorizatoin status for user
+     * 
+     * @param {*} authResponse 
+     * @returns 
+     */
+    static authorized(authResponse = null) {
+        if (authResponse) {
+            Api.sessionSet("x-session-auth", authResponse);
+        } else {
+            return Api.sessionGet("x-session-auth");
+        }
     }
 
 }

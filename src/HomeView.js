@@ -2,6 +2,7 @@ import { Button, Card, Col, Container, Row } from "react-bootstrap"
 
 import { models } from './App';
 import { useMemo } from 'react';
+import { LinkContainer } from "react-router-bootstrap";
 
 export function HomeView() {
 
@@ -11,15 +12,16 @@ export function HomeView() {
                 <Col key={`mode-tile-${modelKey}-${modelIdx}`} xs={12} sm={6} lg={4} className="mb-3">
                     <Card>
                         <Card.Img variant="top" style={
-                            {"objectFit": "cover", "height": "300px"}
+                            { "objectFit": "cover", "height": "300px" }
                         } src={models[modelKey].image} />
                         <Card.Body>
                             <Card.Title>{models[modelKey].name}</Card.Title>
                             <Card.Text>
-                                Some quick example text to build on the card title and make up the bulk of
-                                the card's content.
+                                {models[modelKey].description || '...'}
                             </Card.Text>
-                            <Button variant="primary">Open {models[modelKey].name} model</Button>
+                            <LinkContainer to={`/${modelKey}`}>
+                                <Button variant="primary">Open {models[modelKey].name} model</Button>
+                            </LinkContainer>
                         </Card.Body>
                     </Card>
                 </Col>

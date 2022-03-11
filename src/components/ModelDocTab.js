@@ -24,7 +24,7 @@ export function ModelDocTab({ tabTitle }) {
 
     return (
         <>
-            <h3>{tabTitle}</h3>
+            <h3 className="my-3">{tabTitle}</h3>
             {
                 Array.isArray(doc) && doc.length > 0 && (
                     <Table striped hover size="sm" responsive="sm">

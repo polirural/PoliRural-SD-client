@@ -1,17 +1,24 @@
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState, useCallback } from 'react';
 
 import FilterContext from '../context/FilterContext';
 import { Form } from 'react-bootstrap';
 import { PropTypes } from 'prop-types';
 
-function NumberInput({ label, defaultValue, min, max, step, parameter }) {
+function NumberInput({ label, min, max, step, parameter, defaultValue }) {
 
-    const { updateFilter } = useContext(FilterContext);
+    const { filter, updateFilter } = useContext(FilterContext);
+    const [value, setValue] = useState(defaultValue);
+
+    const onChange = useCallback((event) => {
+        setValue(+event.target.value || 0)
+        updateFilter(parameter, (+event.target.value || 0))
+    }, [updateFilter, parameter]);
 
     useEffect(()=>{
-        console.log("Updating inside number input", parameter, defaultValue);
-        updateFilter(parameter, defaultValue)
-    }, [updateFilter, parameter, defaultValue])
+        if (filter[parameter]) {
+            setValue(filter[parameter]);
+        }
+    }, [filter, parameter])
 
     return (
         <Form>
@@ -22,8 +29,8 @@ function NumberInput({ label, defaultValue, min, max, step, parameter }) {
                     max={max}
                     min={min}
                     step={step}
-                    defaultValue={defaultValue}
-                    onChange={(e) => updateFilter(parameter, (+e.target.value))} />
+                    onChange={onChange}
+                    value={value}/>
             </Form.Group>
         </Form>
     )
@@ -34,8 +41,7 @@ NumberInput.propTypes = {
     parameter: PropTypes.string.isRequired,
     min: PropTypes.number,
     max: PropTypes.number,
-    step: PropTypes.number,
-    defaultValue: PropTypes.number,
+    step: PropTypes.number
 }
 
 NumberInput.defaultProps = {

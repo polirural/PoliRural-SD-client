@@ -16,7 +16,9 @@ const FilterContext = createContext({
     setRunModel: ()=>true,
     runModel: true,
     setModelLoading: ()=>true,
-    modelLoading: false
+    modelLoading: false,
+    setAuth: ()=>undefined,
+    auth: null
 });
 
 export default FilterContext;
