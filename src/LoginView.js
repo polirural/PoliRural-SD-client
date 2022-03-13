@@ -64,21 +64,21 @@ export function LoginView({ logout }) {
                 centered
                 autoFocus
             >
-                <Modal.Header closeButton>
+                <Modal.Header>
                     <Modal.Title>Login form</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
                     <Form.Group className="mb-3" controlId="formBasicEmail">
                         <Form.Label>Email address</Form.Label>
                         <Form.Control type="text" value={authRequest.username} name="username" placeholder="Enter username" onChange={onChange} />
-                        <Form.Text className="text-muted">
-                            We'll never share your email with anyone else.
-                        </Form.Text>
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="formBasicPassword">
                         <Form.Label>Password</Form.Label>
                         <Form.Control type="password" value={authRequest.password} name="password" placeholder="Enter password" onChange={onChange} />
                     </Form.Group>
+                    <Form.Text className="text-muted">
+                        For testing purposes, you may login using demo/demo
+                    </Form.Text>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="primary" onClick={doLogin}>Login</Button>

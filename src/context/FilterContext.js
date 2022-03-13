@@ -1,4 +1,5 @@
 import { createContext } from "react";
+import { VIEW_MODE } from "../config/config";
 
 const FilterContext = createContext({
     updateFilter: (key, value) => { },
@@ -18,7 +19,9 @@ const FilterContext = createContext({
     setModelLoading: ()=>true,
     modelLoading: false,
     setAuth: ()=>undefined,
-    auth: null
+    auth: null,
+    setInputParameterMode: ()=>true,
+    inputParameterMode: VIEW_MODE.WIZARD 
 });
 
 export default FilterContext;

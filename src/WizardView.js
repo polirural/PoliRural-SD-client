@@ -6,7 +6,7 @@ import Wizard from './components/Wizard';
 import Api from './utils/Api';
 import { useCallback } from 'react';
 import { useMatch } from 'react-router-dom';
-import { DefaultConfig } from './config/config';
+import { DefaultConfig, VIEW_MODE } from './config/config';
 import ResultTab from './components/ResultTab';
 import SavedScenariosTab from './components/SavedScenariosTab';
 import ModelDocTab from './components/ModelDocTab';
@@ -14,7 +14,7 @@ import ConfigTab from './components/ConfigTab';
 
 function WizardView(props) {
 
-    const { modelConfig, updateModelConfig } = useContext(FilterContext);
+    const { modelConfig, updateModelConfig, replaceFilter, updateDefaultFilter, inputParameterMode } = useContext(FilterContext);
     const { modelName } = useMatch('/:modelName')?.params;
 
     // Save model configuration
@@ -31,20 +31,26 @@ function WizardView(props) {
                     throw new Error("No model data in response");
                 }
                 saveModelConfig(res.data.value);
+                replaceFilter({})
             })
             .catch(function _handleError(err) {
                 console.warn("Could not load model configuration, reading default and updating in database")
                 saveModelConfig(DefaultConfig);
             });
-    }, [saveModelConfig, modelName]);
+    }, [saveModelConfig, modelName, replaceFilter, updateDefaultFilter]);
 
     return (
         <Container fluid className="vh-100">
+            {modelConfig && inputParameterMode === VIEW_MODE.WIZARD && (
+                <Wizard title={modelConfig.title} children={[]} />
+            )}
             {modelConfig && (
                 <Row>
-                    <Col xs={12} md={4} lg={3} className="filter-bar">
-                        <Wizard title={modelConfig.title} children={[]} />
-                    </Col>
+                    {inputParameterMode === VIEW_MODE.LIST && (
+                        <Col xs={12} md={4} lg={3} className="filter-bar">
+                            <Wizard title={modelConfig.title} children={[]} />
+                        </Col>
+                    )}
                     <Col xs={12} md={8} lg={9} className="p-3">
                         <Tabs defaultActiveKey="model-results" id="results-tabs">
                             <Tab eventKey="model-results" key="model-results-tab" title="Results" className="custom-tab-page">

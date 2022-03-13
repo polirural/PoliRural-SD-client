@@ -8,18 +8,23 @@ import WizardPage from './WizardPage';
 import NumberInput from './NumberInput';
 import DrawLineChart from './DrawLineChart';
 import HelpText from './HelpText';
-
-const VIEW_MODE = {
-    WIZARD: "wizard",
-    LIST: "list"
-}
+import { INPUT_PARAMETER_TYPE, VIEW_MODE } from '../config/config';
 
 function Wizard() {
 
-    const { filter, updateFilter, replaceFilter, setShowHelp, showHelp, modelConfig, setRunModel, modelLoading } = useContext(FilterContext)
+    const { filter, updateFilter, replaceFilter, setShowHelp, showHelp, modelConfig, setRunModel, modelLoading, inputParameterMode, setInputParameterMode } = useContext(FilterContext)
     const { modelName, title } = modelConfig;
     const [page, setPage] = useState(0)
-    const [view, setView] = useState(VIEW_MODE.WIZARD)
+    // const [view, setView] = useState(VIEW_MODE.WIZARD)
+
+    const defaultFormData = useMemo(()=>{
+        return Object.keys(modelConfig.parameters).reduce((p, k)=>{
+            p[k] = modelConfig.parameters[k].type === INPUT_PARAMETER_TYPE.NUMBER ? 0 : [];
+            return p;
+        }, {})
+    }, [modelConfig]) 
+
+    console.log(defaultFormData);
 
     /**
      * Generate parameters
@@ -112,12 +117,12 @@ function Wizard() {
             });
     }, [modelName, replaceFilter])
 
-    if (view === VIEW_MODE.LIST) {
+    if (inputParameterMode === VIEW_MODE.LIST) {
         return <div className="wizard-container p-3">
             <h3 className="mb-3">{title}</h3>
             <ButtonToolbar>
                 <ButtonGroup className="me-2">
-                    <Button size="sm" onClick={() => setView(VIEW_MODE.WIZARD)}>Show wizard</Button>
+                    <Button size="sm" onClick={() => setInputParameterMode(VIEW_MODE.WIZARD)}>Show wizard</Button>
                 </ButtonGroup>
                 <ButtonGroup className="me-2">
                     <Button size="sm" onClick={() => setShowHelp(!showHelp)}>{showHelp ? 'Hide help' : 'Show help'}</Button>
@@ -130,7 +135,7 @@ function Wizard() {
                 {parameters}
             </div>
         </div>
-    } else if (view === VIEW_MODE.WIZARD) {
+    } else if (inputParameterMode === VIEW_MODE.WIZARD) {
         return <Modal
             show={!modelLoading}
             backdrop="static"
@@ -138,7 +143,7 @@ function Wizard() {
             size='xl'
             dialogClassName="wizard-modal"
             onHide={() => {
-                setView(VIEW_MODE.LIST)
+                setInputParameterMode(VIEW_MODE.LIST)
             }}>
             <Modal.Header closeButton>
                 <Modal.Title>
@@ -158,9 +163,8 @@ function Wizard() {
             <Modal.Footer>
                 <Button variant="secondary" disabled={page === 0} onClick={() => changePage(page, -1)}>Previous</Button>
                 <Button variant="secondary" disabled={page === parameters.length - 1} onClick={() => changePage(page, 1)}>Next</Button>
-                {/* <Button variant="secondary"  onClick={() => onRun(filter)}>Run model</Button> */}
                 <Button variant="secondary" onClick={function _onButtonRunModelClick() {
-                    setView(VIEW_MODE.LIST);
+                    setInputParameterMode(VIEW_MODE.LIST);
                     setRunModel(true);
                 }}>Run model</Button>
             </Modal.Footer>

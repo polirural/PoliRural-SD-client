@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { VIEW_MODE } from "../config/config";
 import Api from "../utils/Api";
 
 import FilterContext from "./FilterContext";
@@ -15,6 +16,7 @@ export function FilterProvider({ children }) {
     const [scenarios, setScenarios] = useState([]);
     const [runModel, setRunModel] = useState(true);
     const [modelLoading, setModelLoading] = useState(null);
+    const [inputParameterMode, setInputParameterMode] = useState(VIEW_MODE.WIZARD);
 
     const updateFilter = useCallback((key, value) => {
         setFilter(prevFilter => {
@@ -83,7 +85,11 @@ export function FilterProvider({ children }) {
 
         // Session authentication state
         setAuth,
-        auth
+        auth,
+
+        // Switch input parameter mode between list and wizard mode
+        setInputParameterMode,
+        inputParameterMode
     }
 
     return (

@@ -9,7 +9,7 @@ import EditTitle from './EditTitle';
 
 function ConfigTab({ tabTitle }) {
 
-    const { modelConfig, updateModelConfig, inputParameters, displayParameters } = useContext(FilterContext);
+    const { modelConfig, updateModelConfig, inputParameters } = useContext(FilterContext);
     const [editModelTitle, setEditModelTitle] = useState(false)
     const [editInputParameter, setEditInputParameter] = useState(false)
     const [editDisplayParameter, setEditDisplayParameter] = useState(false)
@@ -124,7 +124,7 @@ function ConfigTab({ tabTitle }) {
                     setEditDisplayParameter(false);
                     addUpdateDisplayParameter(selectedParameter, newParamDefn)
                 }}
-                displayParameters={displayParameters}
+                inputParameters={inputParameters}
                 show={editDisplayParameter}
                 modelConfig={modelConfig}
                 selectedParameter={selectedParameter}
@@ -135,7 +135,7 @@ function ConfigTab({ tabTitle }) {
             />
 
         )
-    }, [editDisplayParameter, selectedParameter, displayParameters, modelConfig, addUpdateDisplayParameter]);
+    }, [editDisplayParameter, selectedParameter, inputParameters, modelConfig, addUpdateDisplayParameter]);
 
     const inputParamRows = useMemo(function generateInputParamRows() {
         if (!modelConfig || !modelConfig.parameters) return console.debug("Did not generate input parameter rows");
@@ -180,6 +180,10 @@ function ConfigTab({ tabTitle }) {
             )
         })
     }, [modelConfig, setEditDisplayParameter, deleteDisplayParameter]);
+
+    // useEffect(() => {
+    //     console.log(inputParameters);
+    // }, [inputParameters])
 
     return (
         <>

@@ -173,6 +173,13 @@ function ResultTab({ tabTitle }) {
         executeModel();
     }, [executeModel, runModel, compareScenario, loadCompareScenario, defaultData])
 
+    // Reset data, comparison and run model when changing to a new model
+    useEffect(() => {
+        setData([]);
+        setDefaultData([]);
+        setRunModel(true);
+    }, [modelName, setRunModel]);
+
     return (
         <>
             <h3 className="my-3">{tabTitle}</h3>
@@ -200,7 +207,7 @@ function ResultTab({ tabTitle }) {
                 <Modal.Body className="text-center">
                     <Spinner animation="border" variant="primary" className="mt-5" />
                     <h4 className="my-5">{modelLoading}</h4>
-                    <p>Patience is a virtue, it is said...</p>
+                    <p>Trees that are slow to grow bear the best fruit.</p>
                 </Modal.Body>
                 {/* <Modal.Footer>
                     <Modal.Title>{modelLoading}</Modal.Title>

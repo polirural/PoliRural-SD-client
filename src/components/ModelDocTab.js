@@ -10,6 +10,7 @@ export function ModelDocTab({ tabTitle }) {
     const [doc, setDoc] = useState([]);
 
     useEffect(() => {
+        console.log('Loading new input parameters');
         Api.getDoc(modelName)
             .then(function (response) {
                 if (response.status === 200) {

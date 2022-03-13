@@ -13,13 +13,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 import FilterContext from './context/FilterContext';
 
 export const models = {
-  "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg' },
-  "flanders_land_use_p": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg' },
-  "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg' },
-  "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg' },
-  "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg' },
-  "segobriga_v2_p": { name: "Segobriga", component: <WizardView />, image: './images/segobriga.jpg' },
-  "vidzeme_v2_p": { name: "Vidzeme", component: <WizardView />, image: './images/vidzeme.jpg' }
+  "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: false },
+  "central_bohemia_p": { name: "Central Bohemia", component: <WizardView />, image: './images/central-bohemia.jpg', active: true },
+  "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg', active: true },
+  "flanders_land_use_p": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg', active: true },
+  "galilee_v2_p": { name: "Galilee", component: <WizardView />, image: './images/galilee.jpg', active: false },
+  "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg', active: true },
+  "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg', active: true },
+  "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg', active: true },
+  "segobriga_v2_p": { name: "Segobriga", component: <WizardView />, image: './images/segobriga.jpg', active: true },
+  "vidzeme_v2_p": { name: "Vidzeme", component: <WizardView />, image: './images/vidzeme.jpg', active: true },
 }
 
 function App() {
@@ -34,7 +37,7 @@ function App() {
   }, [])
 
   const modelNavDropdownItems = useMemo(function _generateModels() {
-    return Object.keys(models).map((k, i) => {
+    return Object.keys(models).sort().filter(k=>models[k].active).map((k, i) => {
       return (
         <LinkContainer key={`link-container-${i}`} to={k}>
           <NavDropdown.Item>{models[k].name}</NavDropdown.Item>
@@ -44,7 +47,7 @@ function App() {
   }, [])
 
   const modelRoutes = useMemo(function _generateModelRoutes() {
-    return Object.keys(models).map((k, i) => {
+    return Object.keys(models).sort().filter(k => models[k].active).map((k, i) => {
       return (
         <Route
           key={`model-route-${i}`}

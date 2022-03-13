@@ -7,7 +7,7 @@ import { LinkContainer } from "react-router-bootstrap";
 export function HomeView() {
 
     const modelViews = useMemo(() => {
-        return Object.keys(models).map((modelKey, modelIdx) => {
+        return Object.keys(models).sort().map((modelKey, modelIdx) => {
             return (
                 <Col key={`mode-tile-${modelKey}-${modelIdx}`} xs={12} sm={6} lg={4} className="mb-3">
                     <Card>
@@ -17,11 +17,13 @@ export function HomeView() {
                         <Card.Body>
                             <Card.Title>{models[modelKey].name}</Card.Title>
                             <Card.Text>
-                                {models[modelKey].description || '...'}
+                                {models[modelKey].description || ''}
                             </Card.Text>
-                            <LinkContainer to={`/${modelKey}`}>
-                                <Button variant="primary">Open {models[modelKey].name} model</Button>
-                            </LinkContainer>
+                            <div className="d-grid gap-2">
+                                <LinkContainer to={`/${modelKey}`}>
+                                    <Button variant="primary" disabled={!models[modelKey].active}>Open {models[modelKey].name} model</Button>
+                                </LinkContainer>
+                            </div>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -36,6 +38,7 @@ export function HomeView() {
             <p>The models have been developed collectively by all pilot regions partaking in the project and have been practically implemented by 22Sistema.</p>
             <p>This tool has been developed in cooperation between 22Sistema, Asplan Viak with key contributions from other partners including BOSC</p>
             <h4 className="my-3">Select one of the following models to get started</h4>
+            <p>Models with dimmed buttons are presently offline due to maintenance and will be back online shortly</p>
             <Row>
                 {modelViews}
             </Row>

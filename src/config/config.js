@@ -100,3 +100,13 @@ export const DefaultConfig  = {
         "WORKING_AGE_POPULATION": "Working age population"
     }
 }
+
+export const VIEW_MODE = {
+    WIZARD: "wizard",
+    LIST: "list"
+}
+
+export const INPUT_PARAMETER_TYPE = {
+    NUMBER: "number",
+    GRAPH: "graph"
+}

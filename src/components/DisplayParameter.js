@@ -7,7 +7,7 @@ import { useCallback, useState } from "react";
 import TypeAheadDropDown from './TypeAheadDropDown';
 
 
-export function DisplayParameter({ displayParameters, selectedParameter, modelConfig, save, show, cancel }) {
+export function DisplayParameter({ inputParameters, selectedParameter, modelConfig, save, show, cancel }) {
     
     const [formData, setFormData] = useState({
         parameter: '',
@@ -58,7 +58,7 @@ export function DisplayParameter({ displayParameters, selectedParameter, modelCo
                         <Col xs={4}>
                             <Form.Group className="mb-4" controlId="parameter.key">
                                 <Form.Label>Parameter name</Form.Label>
-                                <TypeAheadDropDown name="parameter" value={formData.parameter} onChange={handleOnChange} items={displayParameters} />
+                                <TypeAheadDropDown name="parameter" value={formData.parameter} onChange={handleOnChange} items={inputParameters} />
                             </Form.Group>
                         </Col>
                         <Col xs={8}>
@@ -79,7 +79,7 @@ export function DisplayParameter({ displayParameters, selectedParameter, modelCo
 }
 
 DisplayParameter.propTypes = {
-    displayParameters: PropTypes.arrayOf(PropTypes.string).isRequired,
+    inputParameters: PropTypes.arrayOf(PropTypes.string).isRequired,
     modelConfig: PropTypes.object.isRequired,
     show: PropTypes.bool.isRequired,
     save: PropTypes.func.isRequired,
