@@ -26,10 +26,10 @@ function WizardView() {
     useEffect(function _loadModelConfig() {
         if (!modelName) return console.debug("No model name specified", modelName);
         // Clear all before loading model configuration
-        setFilter({});
-        setDefaultFilter({});
+        setFilter(null);
+        setDefaultFilter(null);
         setModelConfig(null);
-        setScenarios({ default: {} });
+        setScenarios(null);
         setCompareScenario('default');
         setRunModel(false);
 

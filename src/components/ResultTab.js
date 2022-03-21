@@ -120,7 +120,7 @@ export function ResultTab({ tabTitle }) {
             </tr>
         );
 
-        let resultRows = data.map((row, rowIdx) => {
+        let resultRows = data.filter(row => +row["IDX_TIME"] >= 2020).map((row, rowIdx) => {
             let cols = colKeys.map((colKey, colIdx) => {
                 let val = row[colKey];
                 if (!isNaN(parseFloat(val))) {
@@ -137,8 +137,8 @@ export function ResultTab({ tabTitle }) {
         return (
             <Col>
                 <div style={{
-                    "height": "90vh",
-                    "overflowY": "auto",
+                    // "height": "90vh",
+                    // "overflowY": "auto",
                     "overflowX": "auto"
                 }}>
                     <h4 className="my-3">Result table</h4>

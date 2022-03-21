@@ -1,6 +1,6 @@
 import './App.scss';
 
-import { Container, Nav, NavDropdown, Navbar, Row } from 'react-bootstrap';
+import { Container, Nav, NavDropdown, Navbar, Row, Badge } from 'react-bootstrap';
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 
 import HomeView from './HomeView';
@@ -11,6 +11,7 @@ import Api from './utils/Api';
 import LoginView from './LoginView';
 import ProtectedRoute from './components/ProtectedRoute';
 import FilterContext from './context/FilterContext';
+import { PersonFill, UnlockFill } from 'react-bootstrap-icons';
 
 export const models = {
   "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: true },
@@ -63,8 +64,8 @@ function App() {
 
   return (
     <Router basename={`${process.env.PUBLIC_URL}`}>
-      <Container fluid style={{height: "100vh", "flexDirection": "column"}}>
-        <Row style={{height: "56px"}}>
+      <Container fluid style={{ height: "100vh", "flexDirection": "column" }}>
+        <Row style={{ height: "56px" }}>
           <Navbar bg="primary" variant="dark" expand="lg" sticky="top">
             <Container fluid>
               <Navbar.Brand href="./">Polirural System Dynamics Tool</Navbar.Brand>
@@ -79,6 +80,9 @@ function App() {
                       <Nav.Link>Login</Nav.Link>
                     </LinkContainer>
                   )}
+                  {auth && auth.username && (<Nav.Link>
+                    Logged in as <Badge bg="info"><PersonFill /> {auth.username}</Badge> <Badge bg="info"><UnlockFill /> {auth.role.join(',')}</Badge>
+                  </Nav.Link>)}
                   {auth && (
                     <LinkContainer to="/logout">
                       <Nav.Link>Logout</Nav.Link>
@@ -92,7 +96,7 @@ function App() {
             </Container>
           </Navbar>
         </Row>
-        <Row style={{flex: 1}}>
+        <Row style={{ flex: 1 }}>
           <Routes>
             <Route
               index
