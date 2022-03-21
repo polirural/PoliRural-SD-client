@@ -7,6 +7,7 @@ import { getSVGString, svgString2Image } from './../utils/SVGDownload';
 import PropTypes from 'prop-types';
 import { saveAs } from 'file-saver';
 import { useD3 } from './../hooks/useD3';
+import { CHART_Y_STARTS_AT } from '../config/config';
 
 function g(min, max) {
     let v = [];
@@ -25,9 +26,58 @@ function getData() {
     });
 }
 
-export function LineChart({ margin, width, height, xRange, yRange, data, baseline, title }) {
+export function LineChart({ margin, width, height, xRange, yRange, data, baseline, title, origo }) {
 
     const [svgNode, setSvgNode] = useState(null);
+
+    const drawLegend = useCallback((svg, width, height) => {
+
+        let offset_top = 50;
+        let offset_left = 100;
+        let spacing = 15;
+        let symbol_size = 5;
+
+        // create a list of keys
+        var keys = ["Current", "Comparison"]
+
+        // Usually you have a color scale in your chart already
+        var color = d3.scaleOrdinal()
+            .domain(keys)
+            .range(["#ff0000", "#0000ff"]);
+
+        // Add one dot in the legend for each name.
+        svg.selectAll(".legend-symbol").remove()
+        svg.selectAll("g")
+            .select(".legend-area")
+            .data(keys)
+            .enter()
+            .append("circle")
+            .attr("class", "legend-symbol")
+            .attr("cx", (width - offset_left))
+            .attr("cy", function (d, i) { return offset_top + (i * spacing) }) // 100 is where the first dot appears. 25 is the distance between dots
+            .attr("r", symbol_size)
+            .style("fill", function (d) { return color(d) })
+
+        // Add one dot in the legend for each name.
+        svg.selectAll(".legend-label").remove()
+        svg.selectAll("g")
+            .select(".legend-area")
+            .data(keys)
+            .enter()
+            .append("text")
+            .attr("class", "legend-label")
+            .attr("x", (width - (offset_left - (symbol_size * 2))))
+            .attr("y", function (d, i) { return offset_top + (i * spacing) }) // 100 is where the first dot appears. 25 is the distance between dots
+            .style("fill", function (d) { return color(d) })
+            .text(function (d) { return d })
+            .attr("text-anchor", "left")
+            .attr("paint-order", "stroke")
+            .attr("stroke", "white")
+            .attr("stroke-width", "3px")
+            .attr("font-size", "8pt")
+            .attr("font-family", "Arial, sans-serif")
+            .style("alignment-baseline", "middle")
+    }, []);
 
     var chart = useD3((svg) => {
 
@@ -53,7 +103,7 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
         }
 
         // Setup X-axis
-        const [minX, maxX] = xRange;
+        let [minX, maxX] = xRange;
 
         const scaleX = d3
             .scaleLinear()
@@ -68,7 +118,10 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
         svg.select(".x-axis").call(xAxis);
 
         // Setup Y-axis
-        const [minY, maxY] = yRange;
+        let [minY, maxY] = yRange;
+
+        // Correct if origo is set to zero
+        minY = origo === CHART_Y_STARTS_AT.DATA ? minY : 0;
 
         const scaleY = d3
             .scaleLinear()
@@ -119,18 +172,20 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
             .attr("stroke-width", "3px")
             .attr("pointer-events", "none");
 
+        drawLegend(svg, width, height);
+
         setSvgNode(svg.node());
-    }, [margin, width, height, data, setSvgNode]);
+    }, [margin, width, height, data, setSvgNode, drawLegend]);
 
     const downloadPNG = useCallback(() => {
 
-        function save( dataBlob, filesize ){
-            saveAs( dataBlob, 'D3 vis exported to PNG.png' ); // FileSaver.js function
-        }        
+        function save(dataBlob, filesize) {
+            saveAs(dataBlob, `${encodeURIComponent(title)}'-chart.png'`); // FileSaver.js function
+        }
         let svgString = getSVGString(svgNode)
-        svgString2Image( svgString, 2*width, 2*height, 'png', save ); // passes Blob and filesize String to the callback
-    
-    }, [width, height, svgNode]);
+        svgString2Image(svgString, 2 * width, 2 * height, 'png', save); // passes Blob and filesize String to the callback
+
+    }, [width, height, svgNode, title]);
 
     return (
         // <div className="mx-auto" width={width} height={height} >
@@ -141,9 +196,10 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
                     ref={chart}
                     width="100%"
                     height={height}            >
-                    <g className="plot-area" />
-                    <g className="x-axis" />
-                    <g className="y-axis" />
+                    <g id="plot-area" className="plot-area" />
+                    <g id="legend-area" className="legend-area" />
+                    <g id="x-axis" className="x-axis" />
+                    <g id="y-axis" className="y-axis" />
                 </svg>
             </div>
             <Row className="mx-3">
@@ -167,7 +223,8 @@ LineChart.propTypes = {
     baseline: PropTypes.arrayOf(PropTypes.shape({
         x: PropTypes.number,
         y: PropTypes.number
-    }))
+    })),
+    origo: PropTypes.number
 }
 
 LineChart.defaultProps = {
@@ -176,7 +233,8 @@ LineChart.defaultProps = {
     height: 240,
     data: getData(),
     baseline: null,
-    title: "Chart title"
+    title: "Chart title",
+    origo: CHART_Y_STARTS_AT.DATA
 }
 
 export default LineChart;

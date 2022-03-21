@@ -5,6 +5,7 @@ import XLSX from 'xlsx';
 import FilterContext from "../context/FilterContext";
 import PropTypes from 'prop-types';
 import Api from "../utils/Api";
+import { CHART_Y_STARTS_AT } from "../config/config";
 
 export function ResultTab({ tabTitle }) {
 
@@ -14,6 +15,7 @@ export function ResultTab({ tabTitle }) {
     const { modelName, visualizations } = modelConfig;
     const [data, setData] = useState([]);
     const [defaultData, setDefaultData] = useState([]);
+    const [origo, setOrigo] = useState(CHART_Y_STARTS_AT.DATA);
 
     // Load model result data
     const executeCurrentScenario = useCallback((modelName) => {
@@ -51,7 +53,6 @@ export function ResultTab({ tabTitle }) {
         };
         Api.runModel(modelName, scenarios[scenarioName])
             .then(function _handleResponse(response) {
-                // console.log("Executing compare", scenarios[scenarioName])
                 setDefaultData(response.data);
             })
             .catch(function _handleError(error) {
@@ -93,6 +94,7 @@ export function ResultTab({ tabTitle }) {
                             title={seriesName}
                             data={series}
                             baseline={defaultSeries}
+                            origo={origo}
                         />
                     </Col>
                 )
@@ -100,7 +102,7 @@ export function ResultTab({ tabTitle }) {
 
         }
         return _charts;
-    }, [visualizations, data, defaultData])
+    }, [visualizations, data, defaultData, origo])
 
     // Create table element for dashboard
     const table = useMemo(() => {
@@ -214,6 +216,16 @@ export function ResultTab({ tabTitle }) {
                 <ButtonGroup key="bg-download" className="me-2">
                     <Button size="sm" onClick={() => downloadExcel(data)}>Download to Excel</Button>
                 </ButtonGroup>
+                {origo === CHART_Y_STARTS_AT.DATA && (
+                    <ButtonGroup key="bg-origo" className="me-2">
+                        <Button size="sm" onClick={() => setOrigo(CHART_Y_STARTS_AT.ZERO)}>Start Y-axis at zero</Button>
+                    </ButtonGroup>
+                )}
+                {origo === CHART_Y_STARTS_AT.ZERO && (
+                    <ButtonGroup key="bg-origo" className="me-2">
+                        <Button size="sm" onClick={() => setOrigo(CHART_Y_STARTS_AT.DATA)}>Scale Y-axis to data</Button>
+                    </ButtonGroup>
+                )}
             </ButtonToolbar>
             <Modal
                 show={modelLoading}

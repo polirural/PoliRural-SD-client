@@ -13,7 +13,7 @@ export function TypeAheadDropDown({ placeholder, name, items, onChange, value })
   const onTextChange = useCallback(function _onTextChange(event) {
     let tmpValue = event.target.value;
     if (tmpValue.length > 0) {
-      const regex = new RegExp(`  ${tmpValue}`, `i`);
+      const regex = new RegExp(`${tmpValue}`, `i`);
       let suggestions = items.sort().filter(v => regex.test(v));
       setSuggestions(suggestions);
     } else {

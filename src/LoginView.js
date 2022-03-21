@@ -1,5 +1,5 @@
 import { useCallback, useContext, useEffect, useState } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import FilterContext from "./context/FilterContext";
 import Api from "./utils/Api";
@@ -71,17 +71,21 @@ export function LoginView({ logout }) {
             </Modal.Header>
             <Modal.Body>
                 <Form>
-                    <Form.Group className="mb-3" controlId="formBasicEmail">
-                        <Form.Label>Email address</Form.Label>
-                        <Form.Control type="text" value={authRequest.username} name="username" placeholder="Enter username" autoComplete="username" onChange={onChange} />
+                    <Form.Group as={Row} className="mb-3" controlId="formBasicEmail">
+                        <Form.Label column xs={3}>Username</Form.Label>
+                        <Col xs={9}>
+                            <Form.Control type="text" value={authRequest.username} name="username" placeholder="Enter username" autoComplete="username" onChange={onChange} />
+                        </Col>
                     </Form.Group>
-                    <Form.Group className="mb-3" controlId="formBasicPassword">
-                        <Form.Label>Password</Form.Label>
-                        <Form.Control type="password" value={authRequest.password} name="password" placeholder="Enter password" autoComplete="current-password" onChange={onChange} />
+                    <Form.Group as={Row} className="mb-3" controlId="formBasicPassword">
+                        <Form.Label column xs={3}>Password</Form.Label>
+                        <Col xs={9}>
+                            <Form.Control type="password" value={authRequest.password} name="password" placeholder="Enter password" autoComplete="current-password" onChange={onChange} />
+                        </Col>
                     </Form.Group>
-                    <Form.Text className="text-muted">
+                    {/* <Form.Text className="text-muted">
                         For testing purposes, you may login using demo/demo
-                    </Form.Text>
+                    </Form.Text> */}
                 </Form>
             </Modal.Body>
             <Modal.Footer>

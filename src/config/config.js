@@ -438,3 +438,14 @@ export const INPUT_PARAMETER_TYPE = {
     NUMBER: "number",
     GRAPH: "graph"
 }
+
+export const CHART_Y_STARTS_AT = {
+    "ZERO": 0,
+    "DATA": 1
+};
+
+export const USER_ROLES = {
+    SUPERADMIN: "superadmin",
+    ADMIN: "admin",
+    VIEWER: "viewer"
+};

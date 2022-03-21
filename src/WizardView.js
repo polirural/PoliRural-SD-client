@@ -10,11 +10,11 @@ import ModelDocTab from './components/ModelDocTab';
 import ConfigTab from './components/ConfigTab';
 import Api from './utils/Api';
 import { clone } from './utils/Object';
-import { DefaultConfig } from './config/config';
+import { DefaultConfig, USER_ROLES } from './config/config';
 
 function WizardView() {
 
-    const { modelConfig, setModelName, updateModelConfig, setModelConfig, setFilter, setDefaultFilter, setScenarios, setRunModel, setCompareScenario } = useContext(FilterContext);
+    const { auth, modelConfig, setModelName, updateModelConfig, setModelConfig, setFilter, setDefaultFilter, setScenarios, setRunModel, setCompareScenario } = useContext(FilterContext);
     const { modelName } = useMatch('/:modelName')?.params;
 
     useEffect(() => {
@@ -81,21 +81,25 @@ function WizardView() {
                                     />
                                 </Container>
                             </Tab>
-                            <Tab eventKey="model-documentation" key="documentation-tab" title="Parameters" className="custom-tab-page">
-                                <Container className="pt-3">
-                                    <ModelDocTab
-                                        key={`parameters-tab-container-${modelName}`}
-                                        tabTitle="Model parameters" />
-                                </Container>
-                            </Tab >
-                            <Tab eventKey="model-config" key="config-tab" title="Configuration" className="custom-tab-page">
-                                <Container className="pt-3">
-                                    <ConfigTab
-                                        key={`config-tab-container-${modelName}`}
-                                        tabTitle="Model configuration"
-                                    />
-                                </Container>
-                            </Tab>
+                            {auth && Array.isArray(auth.role) && [USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN].some(curr_role => auth.role.indexOf(curr_role) > -1) && (
+                                <Tab eventKey="model-documentation" key="documentation-tab" title="Parameters" className="custom-tab-page">
+                                    <Container className="pt-3">
+                                        <ModelDocTab
+                                            key={`parameters-tab-container-${modelName}`}
+                                            tabTitle="Model parameters" />
+                                    </Container>
+                                </Tab>
+                            )}
+                            {auth && Array.isArray(auth.role) && [USER_ROLES.SUPERADMIN, USER_ROLES.ADMIN].some(curr_role => auth.role.indexOf(curr_role) > -1) && (
+                                <Tab eventKey="model-config" key="config-tab" title="Configuration" className="custom-tab-page">
+                                    <Container className="pt-3">
+                                        <ConfigTab
+                                            key={`config-tab-container-${modelName}`}
+                                            tabTitle="Model configuration"
+                                        />
+                                    </Container>
+                                </Tab>
+                            )}
                         </Tabs>
                     </Col>
                 </Row>
