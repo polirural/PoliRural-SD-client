@@ -62,7 +62,7 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
 
         const xAxis = (g) =>
             g.attr("transform", `translate(0,${height - margin.bottom})`)
-                .call(d3.axisBottom(scaleX).ticks(null, ""))
+                .call(d3.axisBottom(scaleX).ticks(5, ""))
                 .call(g => g.attr("pointer-events", "none"));
 
         svg.select(".x-axis").call(xAxis);

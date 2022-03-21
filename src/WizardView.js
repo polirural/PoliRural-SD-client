@@ -3,60 +3,72 @@ import { useContext, useEffect } from 'react';
 
 import FilterContext from './context/FilterContext';
 import Wizard from './components/Wizard';
-import Api from './utils/Api';
-import { useCallback } from 'react';
 import { useMatch } from 'react-router-dom';
-import { DefaultConfig, VIEW_MODE } from './config/config';
 import ResultTab from './components/ResultTab';
 import SavedScenariosTab from './components/SavedScenariosTab';
 import ModelDocTab from './components/ModelDocTab';
 import ConfigTab from './components/ConfigTab';
+import Api from './utils/Api';
+import { clone } from './utils/Object';
+import { DefaultConfig } from './config/config';
 
-function WizardView(props) {
+function WizardView() {
 
-    const { modelConfig, updateModelConfig, replaceFilter, updateDefaultFilter, inputParameterMode } = useContext(FilterContext);
+    const { modelConfig, setModelName, updateModelConfig, setModelConfig, setFilter, setDefaultFilter, setScenarios, setRunModel, setCompareScenario } = useContext(FilterContext);
     const { modelName } = useMatch('/:modelName')?.params;
 
-    // Save model configuration
-    const saveModelConfig = useCallback(function _saveModelConfig(newModelConfig) {
-        newModelConfig.modelName = modelName;
-        updateModelConfig(newModelConfig);
-    }, [updateModelConfig, modelName]);
+    useEffect(() => {
+        setModelName(modelName);
+    }, [modelName, setModelName])
 
+    // Save model configuration
+    // Load model config whenever it changes
     useEffect(function _loadModelConfig() {
         if (!modelName) return console.debug("No model name specified", modelName);
-        Api.get(modelName, "config")
-            .then(function _handleResponse(res) {
-                if (!res.data || !res.data.value) {
-                    throw new Error("No model data in response");
-                }
-                saveModelConfig(res.data.value);
-                replaceFilter({})
-            })
-            .catch(function _handleError(err) {
-                console.warn("Could not load model configuration, reading default and updating in database")
-                saveModelConfig(DefaultConfig);
-            });
-    }, [saveModelConfig, modelName, replaceFilter, updateDefaultFilter]);
+        // Clear all before loading model configuration
+        setFilter({});
+        setDefaultFilter({});
+        setModelConfig(null);
+        setScenarios({ default: {} });
+        setCompareScenario('default');
+        setRunModel(false);
+
+        // Load all data
+        setTimeout(() => {
+            Api.getConfig(modelName)
+                .then(function _handleResponse(res) {
+                    if (!res.data || !res.data.value) {
+                        throw new Error("No model data in response");
+                    }
+                    setModelConfig(res.data.value);
+                })
+                .catch(function _handleError(err) {
+                    console.warn("Could not load model configuration, reading default and updating in database")
+                    updateModelConfig({
+                        ...clone(DefaultConfig),
+                        modelName
+                    });
+                }).finally(() => {
+                    setTimeout(() => {
+                        setRunModel(true);
+                    }, 50)
+                });
+        }, 50)
+    }, [modelName, setModelConfig, updateModelConfig, setDefaultFilter, setFilter, setScenarios, setRunModel, setCompareScenario]);
 
     return (
         <Container fluid className="vh-100">
-            {modelConfig && inputParameterMode === VIEW_MODE.WIZARD && (
-                <Wizard title={modelConfig.title} children={[]} />
-            )}
             {modelConfig && (
                 <Row>
-                    {inputParameterMode === VIEW_MODE.LIST && (
-                        <Col xs={12} md={4} lg={3} className="filter-bar">
-                            <Wizard title={modelConfig.title} children={[]} />
-                        </Col>
-                    )}
+                    <Col xs={12} md={4} lg={3} className="filter-bar">
+                        <Wizard title={modelConfig.title} children={[]} key={`wizard-${modelName}`} />
+                    </Col>
                     <Col xs={12} md={8} lg={9} className="p-3">
                         <Tabs defaultActiveKey="model-results" id="results-tabs">
                             <Tab eventKey="model-results" key="model-results-tab" title="Results" className="custom-tab-page">
                                 <Container className="pt-3">
                                     <ResultTab
-                                        key="results-tab-container"
+                                        key={`results-tab-container-${modelName}`}
                                         tabTitle="Model results"
                                     />
                                 </Container>
@@ -64,7 +76,7 @@ function WizardView(props) {
                             <Tab eventKey="scenarios-config" key="scenarios-tab" title="Scenarios" className="custom-tab-page">
                                 <Container className="pt-3">
                                     <SavedScenariosTab
-                                        key="scenarios-tab-container"
+                                        key={`scenarios-tab-container-${modelName}`}
                                         tabTitle="Model scenarios"
                                     />
                                 </Container>
@@ -72,14 +84,14 @@ function WizardView(props) {
                             <Tab eventKey="model-documentation" key="documentation-tab" title="Parameters" className="custom-tab-page">
                                 <Container className="pt-3">
                                     <ModelDocTab
-                                        key="parameters-tab-container"
+                                        key={`parameters-tab-container-${modelName}`}
                                         tabTitle="Model parameters" />
                                 </Container>
                             </Tab >
                             <Tab eventKey="model-config" key="config-tab" title="Configuration" className="custom-tab-page">
                                 <Container className="pt-3">
                                     <ConfigTab
-                                        key="config-tab-container"
+                                        key={`config-tab-container-${modelName}`}
                                         tabTitle="Model configuration"
                                     />
                                 </Container>

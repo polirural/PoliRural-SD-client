@@ -7,35 +7,35 @@ import { Folder2Open, Trash } from "react-bootstrap-icons";
 
 export function SavedScenariosTab({ tabTitle }) {
 
-    const { filter, replaceFilter, scenarios, updateScenarios, modelConfig } = useContext(FilterContext)
+    const { filter, setFilter, scenarios, setScenarios, setDefaultFilter, modelConfig } = useContext(FilterContext)
     const { modelName } = modelConfig;
 
     const saveScenario = useCallback((newScenarioDefn) => {
         var name = window.prompt("Please specify a name for the saved scenario");
         if (!name) return console.debug("No name specified, cancelled");
-        updateScenarios(currentScenarios => {
+        setScenarios(currentScenarios => {
             var tmpScenarios = { ...currentScenarios };
             tmpScenarios[name] = newScenarioDefn;
-            updateScenarios(tmpScenarios);
+            setScenarios(tmpScenarios);
             Api.setScenarios(modelName, tmpScenarios)
                 .then(res => {
                     console.debug("Saved scenario", res);
                 })
                 .catch(err => {
-                    console.error(err);
+                    console.error("Error saving scenario", err);
                 });
         });
-    }, [updateScenarios, modelName]);
+    }, [setScenarios, modelName]);
 
     const loadScenario = useCallback((scenarioName) => {
         const scenarioDefn = { ...scenarios[scenarioName] };
-        replaceFilter(scenarioDefn);
-    }, [replaceFilter, scenarios])
+        setFilter(scenarioDefn);
+    }, [setFilter, scenarios])
 
     const deleteScenario = useCallback((scenarioName) => {
         if (!window.confirm(`Are you sure you wish to delete the saved scenario: "${scenarioName}"`)) return console.debug("Did not delete scenario");
 
-        updateScenarios(currentScenarios => {
+        setScenarios(currentScenarios => {
             let tmpScenarios = { ...currentScenarios };
             delete tmpScenarios[scenarioName];
             Api.setScenarios(modelName, tmpScenarios)
@@ -43,40 +43,41 @@ export function SavedScenariosTab({ tabTitle }) {
                     console.log("Updated scenarios after delete");
                 })
                 .catch(function _handleError(err) {
-                    console.error(err);
+                    console.error("Error setting scenario", err);
                 });
             return tmpScenarios;
         });
 
-    }, [updateScenarios, modelName]);
+    }, [setScenarios, modelName]);
 
-    const createDefaultScenario = useCallback(
-        () => {
+    const createDefaultScenario = useCallback(() => {
+        if (modelName) {
             let defaultScenario = { default: {} };
             Api.setScenarios(modelName, defaultScenario).then(res => {
-                updateScenarios(defaultScenario);
+                setScenarios(defaultScenario);
+                setDefaultFilter(defaultScenario);
             })
-        },
-        [modelName, updateScenarios],
-    )
+        }
+    }, [modelName, setScenarios, setDefaultFilter])
 
     useEffect(function _loadSavedScenarios() {
-        Api.getScenarios(modelName)
-            .then(function _handleResponse(res) {
-                if (!res.data || !res.data.value) {
+        if (modelName) {
+            Api.getScenarios(modelName)
+                .then(function _handleResponse(res) {
+                    // console.log("loading scenarios", res);
+                    if (!res.data || !res.data.value) {
+                        createDefaultScenario();
+                    } else {
+                        setScenarios(res.data.value);
+                        setFilter(res.data.value["default"]);
+                    }
+                })
+                .catch(function _handleError(err) {
+                    console.error("Error loading scenarios", err);
                     createDefaultScenario();
-                } else {
-                    updateScenarios(res.data.value);
-                }
-            })
-            .catch(function _handleError(err) {
-                console.error("Error loading scenarios", err);
-                createDefaultScenario();
-            });
-
-    }, [updateScenarios, modelName, createDefaultScenario]);
-
-
+                });
+        }
+    }, [setScenarios, modelName, createDefaultScenario, setFilter]);
 
     return (
         <>
@@ -90,7 +91,7 @@ export function SavedScenariosTab({ tabTitle }) {
                     </tr>
                 </thead>
                 <tbody>
-                    {Array.isArray(Object.keys(scenarios)) &&
+                    {scenarios && Array.isArray(Object.keys(scenarios)) &&
                         Object.keys(scenarios).map(function _forEachScenarioName(scenarioName) {
                             return (
                                 <tr key={`saved-scenario-${scenarioName}`}>
@@ -126,9 +127,10 @@ export function SavedScenariosTab({ tabTitle }) {
                 <tbody>
                     {filter && Object.keys(filter).sort().map(function _forEachParamName(paramName) {
                         let paramValue = JSON.stringify(filter[paramName], null, 2);
-                        if (typeof filter[paramName] === 'object' && Array.isArray(filter[paramName].data)) {
+                        if (filter[paramName] && typeof filter[paramName] === 'object' && Array.isArray(filter[paramName].data)) {
                             let tmpData = filter[paramName].data;
                             paramValue = tmpData.filter((e, i) => i < 5);
+
                             paramValue = `[${paramValue.join(", ")}, ...] (${tmpData.length} values)`;
                         }
                         return (
@@ -141,8 +143,8 @@ export function SavedScenariosTab({ tabTitle }) {
                 </tbody>
             </Table>
             {/* <pre>
-            {JSON.stringify(filter, null, 2)}
-        </pre> */}
+                {JSON.stringify(filter, null, 2)}
+            </pre> */}
         </>
     )
 }

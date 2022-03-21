@@ -6,40 +6,59 @@ import FilterContext from "../context/FilterContext";
 import PropTypes from 'prop-types';
 import Api from "../utils/Api";
 
-function ResultTab({ tabTitle }) {
+export function ResultTab({ tabTitle }) {
 
     // const [runModel, setRunModel] = useState(true);
     const [loadedDisplayParameters, setLoadedDisplayParameters] = useState(false);
-    const { filter, scenarios, modelConfig, updateDisplayParameters, runModel, setRunModel, setModelLoading, modelLoading } = useContext(FilterContext);
+    const { filter, scenarios, modelConfig, setDisplayParameters, runModel, setRunModel, setModelLoading, modelLoading, compareScenario, setCompareScenario } = useContext(FilterContext);
     const { modelName, visualizations } = modelConfig;
     const [data, setData] = useState([]);
     const [defaultData, setDefaultData] = useState([]);
-    const [compareScenario, setCompareScenario] = useState("default");
 
     // Load model result data
-    const executeModel = useCallback(() => {
+    const executeCurrentScenario = useCallback((modelName) => {
+        if (!scenarios || !scenarios["default"] || !modelName || modelLoading) {
+            return;
+        }
         setRunModel(false);
-        setModelLoading('Executing model, loading data');
-        Api.runModel(modelName, filter)
+        setModelLoading(true);
+
+        let tmpFilter = filter ? filter : scenarios["default"];
+        Api.runModel(modelName, tmpFilter)
             .then((response) => {
+                // console.log("Executing current", filter);
                 if (!Array.isArray(response.data) || response.data.length < 1) {
                     throw new Error("No data returned from model");
                 }
                 setData(response.data)
                 if (!loadedDisplayParameters) {
-                    updateDisplayParameters(Object.keys(response.data[0]).sort());
+                    setDisplayParameters(Object.keys(response.data[0]).sort());
                     setLoadedDisplayParameters(true);
                 }
             })
             .catch((error) => {
-                // console.error(error);
                 console.warn("No saved display parameters");
             })
             .finally(() => {
-                setModelLoading(null);
+                setModelLoading(false);
             });
-    }, [filter, modelName, setRunModel, setModelLoading, loadedDisplayParameters, updateDisplayParameters, setLoadedDisplayParameters]);
+    }, [filter, setRunModel, setModelLoading, loadedDisplayParameters, setDisplayParameters, setLoadedDisplayParameters, modelLoading, scenarios]);
 
+    // Load results from comparison scenario
+    const executeCompareScenario = useCallback(function _loadCompareScenario(scenarioName) {
+        if (!scenarios || !scenarios[scenarioName] || !modelName || modelLoading) {
+            return;
+        };
+        Api.runModel(modelName, scenarios[scenarioName])
+            .then(function _handleResponse(response) {
+                // console.log("Executing compare", scenarios[scenarioName])
+                setDefaultData(response.data);
+            })
+            .catch(function _handleError(error) {
+                console.error("Error loading compare scenario", error);
+            });
+
+    }, [scenarios, modelName, modelLoading]);
     // Create chart elements for dashboard
     var charts = useMemo(() => {
         if (data.length === 0) return null;
@@ -65,16 +84,20 @@ function ResultTab({ tabTitle }) {
                 });
             }
 
-            // Create LineChart element
-            _charts.push(
-                <Col key={`chart-col-${new Date().toISOString()}-${_charts.length + 1}`} sm={1} md={6} xxl={4}>
-                    <LineChart
-                        title={seriesName}
-                        data={series}
-                        baseline={defaultSeries}
-                    />
-                </Col>
-            )
+            if ((Array.isArray(series) && !series.some(dp => !dp.y))
+                && (Array.isArray(defaultSeries) && !defaultSeries.some(dp => !dp.y))) {
+                // Create LineChart element
+                _charts.push(
+                    <Col key={`chart-col-${new Date().toISOString()}-${_charts.length + 1}`} sm={1} md={6} xxl={4}>
+                        <LineChart
+                            title={seriesName}
+                            data={series}
+                            baseline={defaultSeries}
+                        />
+                    </Col>
+                )
+            }
+
         }
         return _charts;
     }, [visualizations, data, defaultData])
@@ -111,15 +134,21 @@ function ResultTab({ tabTitle }) {
         if (data.length === 0) return;
         return (
             <Col>
-                <h4 className="my-3">Result table</h4>
-                <Table responsive striped bordered hover className="custom-table">
-                    <thead>
-                        {headerRow}
-                    </thead>
-                    <tbody>
-                        {resultRows}
-                    </tbody>
-                </Table>
+                <div style={{
+                    "height": "90vh",
+                    "overflowY": "auto",
+                    "overflowX": "auto"
+                }}>
+                    <h4 className="my-3">Result table</h4>
+                    <Table striped bordered hover>
+                        <thead>
+                            {headerRow}
+                        </thead>
+                        <tbody>
+                            {resultRows}
+                        </tbody>
+                    </Table>
+                </div>
             </Col>
         )
 
@@ -136,22 +165,6 @@ function ResultTab({ tabTitle }) {
         XLSX.writeFile(wb, `model-data-${new Date().toISOString()}.xlsx`);
     }, []);
 
-    // Load results from comparison scenario
-    const loadCompareScenario = useCallback(function _loadCompareScenario(scenarioName) {
-        if (!scenarios || !scenarios[scenarioName] || modelLoading) {
-            console.log(scenarios);
-            return;
-        };
-        Api.runModel(modelName, scenarios[scenarioName])
-            .then(function _handleResponse(response) {
-                setDefaultData(response.data);
-            })
-            .catch(function _handleError(error) {
-                console.error(error);
-            });
-
-    }, [scenarios, modelName, modelLoading]);
-
     /**
      * Updates the current selected scenario name and executes model to retrieve data
      * if different from current scenario name
@@ -159,26 +172,29 @@ function ResultTab({ tabTitle }) {
     const handleSelectCompareScenario = useCallback((scenarioName) => {
         setCompareScenario(prevScenario => {
             if (prevScenario !== scenarioName) {
-                loadCompareScenario(scenarioName);
+                executeCompareScenario(scenarioName);
             }
             return scenarioName
         })
-    }, [loadCompareScenario]);
+    }, [executeCompareScenario, setCompareScenario]);
 
     useEffect(() => {
-        if (!runModel) return;
-        if (defaultData.length === 0 && compareScenario) {
-            loadCompareScenario(compareScenario);
+        if (!runModel || !modelName) return;
+        if (defaultData.length === 0) {
+            executeCompareScenario(compareScenario || 'default');
         }
-        executeModel();
-    }, [executeModel, runModel, compareScenario, loadCompareScenario, defaultData])
+        executeCurrentScenario(modelName);
+    }, [executeCurrentScenario, modelName, runModel, compareScenario, executeCompareScenario, defaultData])
 
     // Reset data, comparison and run model when changing to a new model
     useEffect(() => {
         setData([]);
         setDefaultData([]);
-        setRunModel(true);
-    }, [modelName, setRunModel]);
+        return () => {
+            setData([]);
+            setDefaultData([]);
+        }
+    }, [modelName]);
 
     return (
         <>
@@ -190,7 +206,7 @@ function ResultTab({ tabTitle }) {
                 </ButtonGroup>
                 <ButtonGroup key="bg-scenario" className="me-2">
                     <DropdownButton size="sm" id="dropdown-basic" title={`Compare to: ${compareScenario}`}>
-                        {Object.keys(scenarios).map(scenarioName => (
+                        {scenarios !== null && Object.keys(scenarios).map(scenarioName => (
                             <Dropdown.Item key={`dd-item-${scenarioName}`} onClick={() => handleSelectCompareScenario(scenarioName)}>{scenarioName}</Dropdown.Item>
                         ))}
                     </DropdownButton>
@@ -209,9 +225,6 @@ function ResultTab({ tabTitle }) {
                     <h4 className="my-5">{modelLoading}</h4>
                     <p>Trees that are slow to grow bear the best fruit.</p>
                 </Modal.Body>
-                {/* <Modal.Footer>
-                    <Modal.Title>{modelLoading}</Modal.Title>
-                </Modal.Footer> */}
             </Modal>
             <Row>
                 {Array.isArray(charts) && charts.length > 0 && (charts)}

@@ -13,11 +13,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import FilterContext from './context/FilterContext';
 
 export const models = {
-  "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: false },
+  "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: true },
   "central_bohemia_p": { name: "Central Bohemia", component: <WizardView />, image: './images/central-bohemia.jpg', active: true },
   "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg', active: true },
   "flanders_land_use_p": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg', active: true },
-  "galilee_v2_p": { name: "Galilee", component: <WizardView />, image: './images/galilee.jpg', active: false },
+  "galilee_v2_p": { name: "Galilee", component: <WizardView />, image: './images/galilee.jpg', active: true },
   "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg', active: true },
   "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg', active: true },
   "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg', active: true },
@@ -37,7 +37,7 @@ function App() {
   }, [])
 
   const modelNavDropdownItems = useMemo(function _generateModels() {
-    return Object.keys(models).sort().filter(k=>models[k].active).map((k, i) => {
+    return Object.keys(models).sort().filter(k => models[k].active).map((k, i) => {
       return (
         <LinkContainer key={`link-container-${i}`} to={k}>
           <NavDropdown.Item>{models[k].name}</NavDropdown.Item>
@@ -63,34 +63,36 @@ function App() {
 
   return (
     <Router basename={`${process.env.PUBLIC_URL}`}>
-      <Container fluid>
-        <Navbar bg="primary" variant="dark" expand="lg" sticky="top">
-          <Container fluid>
-            <Navbar.Brand href="./">Polirural System Dynamics Tool</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="ms-auto">
-                <LinkContainer to="/">
-                  <Nav.Link>Home</Nav.Link>
-                </LinkContainer>
-                {!auth && (
-                  <LinkContainer to="/login">
-                    <Nav.Link>Login</Nav.Link>
+      <Container fluid style={{height: "100vh", "flexDirection": "column"}}>
+        <Row style={{height: "56px"}}>
+          <Navbar bg="primary" variant="dark" expand="lg" sticky="top">
+            <Container fluid>
+              <Navbar.Brand href="./">Polirural System Dynamics Tool</Navbar.Brand>
+              <Navbar.Toggle aria-controls="basic-navbar-nav" />
+              <Navbar.Collapse id="basic-navbar-nav">
+                <Nav className="ms-auto">
+                  <LinkContainer to="/">
+                    <Nav.Link>Home</Nav.Link>
                   </LinkContainer>
-                )}
-                {auth && (
-                  <LinkContainer to="/logout">
-                    <Nav.Link>Logout</Nav.Link>
-                  </LinkContainer>
-                )}
-                <NavDropdown title="Select model" id="basic-nav-dropdown">
-                  {modelNavDropdownItems}
-                </NavDropdown>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
-        </Navbar>
-        <Row>
+                  {!auth && (
+                    <LinkContainer to="/login">
+                      <Nav.Link>Login</Nav.Link>
+                    </LinkContainer>
+                  )}
+                  {auth && (
+                    <LinkContainer to="/logout">
+                      <Nav.Link>Logout</Nav.Link>
+                    </LinkContainer>
+                  )}
+                  <NavDropdown title="Select model" id="basic-nav-dropdown">
+                    {modelNavDropdownItems}
+                  </NavDropdown>
+                </Nav>
+              </Navbar.Collapse>
+            </Container>
+          </Navbar>
+        </Row>
+        <Row style={{flex: 1}}>
           <Routes>
             <Route
               index

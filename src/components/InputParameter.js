@@ -11,13 +11,16 @@ export function InputParameter({ selectedParameter, modelConfig, inputParameters
 
     const [formData, setFormData] = useState({
         "parameter": "",
+        "order": "",
         "title": "",
         "label": "",
         "help": "",
         "type": "number",
         "defaultValue": 1,
         "min": 1,
-        "max": 10
+        "max": 10,
+        "tmin": 2022,
+        "tmax": 2042
     });
 
     const handleOnShow = useCallback((event) => {
@@ -57,13 +60,19 @@ export function InputParameter({ selectedParameter, modelConfig, inputParameters
                 </Modal.Header>
                 <Modal.Body>
                     <Row>
+                        <Col xs={1}>
+                            <Form.Group className="mb-4" controlId="parameter.order">
+                                <Form.Label>#</Form.Label>
+                                <Form.Control name="order" type="text" value={formData.order} onChange={handleOnChange} />
+                            </Form.Group>
+                        </Col>
                         <Col xs={4}>
                             <Form.Group className="mb-4" controlId="parameter.key">
                                 <Form.Label>Parameter name</Form.Label>
                                 <TypeAheadDropDown key="test" name="parameter" items={inputParameters} value={formData.parameter} onChange={handleOnChange} />
                             </Form.Group>
                         </Col>
-                        <Col xs={8}>
+                        <Col xs={7}>
                             <Form.Group className="mb-8" controlId="parameter.title">
                                 <Form.Label>Title</Form.Label>
                                 <Form.Control name="title" type="text" value={formData.title} onChange={handleOnChange} />
@@ -114,6 +123,22 @@ export function InputParameter({ selectedParameter, modelConfig, inputParameters
                                 <Form.Control name="max" type="number" value={formData.max} onChange={handleOnChange} />
                             </Form.Group>
                         </Col>
+                        {formData.type === "graph" && (
+                            <Col>
+                                <Form.Group className="mb-3" controlId="parameter.tmin">
+                                    <Form.Label>Min timestep</Form.Label>
+                                    <Form.Control name="tmin" type="number" value={formData.tmin} onChange={handleOnChange} />
+                                </Form.Group>
+                            </Col>
+                        )}
+                        {formData.type === "graph" && (
+                            <Col>
+                                <Form.Group className="mb-3" controlId="parameter.tmax">
+                                    <Form.Label>Max timestep</Form.Label>
+                                    <Form.Control name="tmax" type="number" value={formData.tmax} onChange={handleOnChange} />
+                                </Form.Group>
+                            </Col>
+                        )}
                     </Row>
                 </Modal.Body>
                 <Modal.Footer>

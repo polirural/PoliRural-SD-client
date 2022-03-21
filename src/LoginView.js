@@ -26,6 +26,7 @@ export function LoginView({ logout }) {
     const doLogout = useCallback(
         () => {
             setAuth()
+            Api.authorized(null)
         },
         [setAuth]
     )
@@ -33,7 +34,8 @@ export function LoginView({ logout }) {
     const doLogin = useCallback(
         () => {
             Api.doLogin(authRequest).then(res => {
-                setAuth(res.data)
+                setAuth(res.data);
+                Api.authorized(res.data);
             }).catch((err) => {
                 doLogout()
             })
@@ -57,36 +59,37 @@ export function LoginView({ logout }) {
     }
 
     return (
-        <Form>
-            <Modal
-                show={true}
-                backdrop="static"
-                centered
-                autoFocus
-            >
-                <Modal.Header>
-                    <Modal.Title>Login form</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
+
+        <Modal
+            show={true}
+            backdrop="static"
+            centered
+            autoFocus
+        >
+            <Modal.Header>
+                <Modal.Title>Login form</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <Form>
                     <Form.Group className="mb-3" controlId="formBasicEmail">
                         <Form.Label>Email address</Form.Label>
-                        <Form.Control type="text" value={authRequest.username} name="username" placeholder="Enter username" onChange={onChange} />
+                        <Form.Control type="text" value={authRequest.username} name="username" placeholder="Enter username" autoComplete="username" onChange={onChange} />
                     </Form.Group>
                     <Form.Group className="mb-3" controlId="formBasicPassword">
                         <Form.Label>Password</Form.Label>
-                        <Form.Control type="password" value={authRequest.password} name="password" placeholder="Enter password" onChange={onChange} />
+                        <Form.Control type="password" value={authRequest.password} name="password" placeholder="Enter password" autoComplete="current-password" onChange={onChange} />
                     </Form.Group>
                     <Form.Text className="text-muted">
                         For testing purposes, you may login using demo/demo
                     </Form.Text>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="primary" onClick={doLogin}>Login</Button>
-                    {/* <Button variant="secondary">Reminder</Button>
+                </Form>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="primary" onClick={doLogin}>Login</Button>
+                {/* <Button variant="secondary">Reminder</Button>
                     <Button variant="secondary">Register</Button> */}
-                </Modal.Footer>
-            </Modal>
-        </Form>
+            </Modal.Footer>
+        </Modal>
     )
 }
 

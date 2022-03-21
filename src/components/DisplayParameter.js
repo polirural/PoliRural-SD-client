@@ -6,19 +6,22 @@ import { Save, XSquare } from "react-bootstrap-icons";
 import { useCallback, useState } from "react";
 import TypeAheadDropDown from './TypeAheadDropDown';
 
+const defaultFormData = {
+    parameter: '',
+    title: ''
+};
 
 export function DisplayParameter({ inputParameters, selectedParameter, modelConfig, save, show, cancel }) {
-    
-    const [formData, setFormData] = useState({
-        parameter: '',
-        title: ''
-    });
+
+    const [formData, setFormData] = useState(defaultFormData);
 
     const handleOnShow = useCallback((event) => {
         if (selectedParameter && modelConfig && modelConfig.visualizations && modelConfig.visualizations[selectedParameter]) {
-            let currentFormData = {title: modelConfig.visualizations[selectedParameter]};
+            let currentFormData = { title: modelConfig.visualizations[selectedParameter] };
             currentFormData["parameter"] = selectedParameter;
             setFormData(currentFormData);
+        } else {
+            setFormData(defaultFormData);
         }
     }, [modelConfig, selectedParameter])
 

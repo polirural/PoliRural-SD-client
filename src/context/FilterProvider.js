@@ -6,23 +6,25 @@ import FilterContext from "./FilterContext";
 
 export function FilterProvider({ children }) {
 
-    const [filter, setFilter] = useState({});
+    const [modelConfig, setModelConfig] = useState(null);
+    const [filter, setFilter] = useState(null);
+    const [defaultFilter, setDefaultFilter] = useState(null);
+    const [scenarios, setScenarios] = useState(null);
+    const [compareScenario, setCompareScenario] = useState(null);
     const [auth, setAuth] = useState(Api.authorized());
-    const [defaultFilter, setDefaultFilter] = useState({});
     const [showHelp, setShowHelp] = useState(true);
     const [inputParameters, setInputParameters] = useState([]);
     const [displayParameters, setDisplayParameters] = useState([]);
-    const [modelConfig, setModelConfig] = useState(null);
-    const [scenarios, setScenarios] = useState([]);
     const [runModel, setRunModel] = useState(true);
     const [modelLoading, setModelLoading] = useState(null);
     const [inputParameterMode, setInputParameterMode] = useState(VIEW_MODE.WIZARD);
+    const [modelName, setModelName] = useState(null);
 
     const updateFilter = useCallback((key, value) => {
         setFilter(prevFilter => {
-            prevFilter[key] = value;
             return {
                 ...prevFilter,
+                [key]: value
             }
         });
     }, [setFilter]);
@@ -36,23 +38,24 @@ export function FilterProvider({ children }) {
     }, [setDefaultFilter]);
 
     const updateModelConfig = useCallback(function _updateModalConfig(newModelConfig) {        
-        Api.set(newModelConfig.modelName, "config", newModelConfig)
+        return Api.setConfig(newModelConfig.modelName, newModelConfig)
         .then(function _handleResponse(res){
             setModelConfig(newModelConfig);
         })
         .catch(function handleError(err) {
-            console.error(err);
+            console.error("Error updating model configuration", err);
         })
-
     }, [setModelConfig]);
 
     const providerValue = {
         // The scenario filters
         updateFilter,
-        replaceFilter: setFilter,
+        setFilter,
         filter,
+        
         // The compare scenario filter
         updateDefaultFilter,
+        setDefaultFilter,
         defaultFilter,
 
         // The boolean flag that determines if to show help 
@@ -60,19 +63,20 @@ export function FilterProvider({ children }) {
         showHelp,
 
         // The list of available input parameters to the model
-        updateInputParameters: setInputParameters,
+        setInputParameters,
         inputParameters,
 
         // The list of available output parameters from the model
-        updateDisplayParameters: setDisplayParameters,
+        setDisplayParameters,
         displayParameters,
 
         // The model configuration
         updateModelConfig,
+        setModelConfig,
         modelConfig,
 
         // The stored model scenarios
-        updateScenarios: setScenarios,
+        setScenarios,
         scenarios,
 
         // Flag to determine whether to run model
@@ -89,7 +93,15 @@ export function FilterProvider({ children }) {
 
         // Switch input parameter mode between list and wizard mode
         setInputParameterMode,
-        inputParameterMode
+        inputParameterMode,
+
+        // Set model name
+        setModelName,
+        modelName,
+
+        // Set compare scenario
+        setCompareScenario,
+        compareScenario
     }
 
     return (

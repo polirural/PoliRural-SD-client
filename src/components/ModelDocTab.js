@@ -5,23 +5,28 @@ import Api from "../utils/Api";
 
 export function ModelDocTab({ tabTitle }) {
 
-    const { updateInputParameters, modelConfig } = useContext(FilterContext);
+    const { setInputParameters, modelConfig } = useContext(FilterContext);
     const { modelName } = modelConfig;
     const [doc, setDoc] = useState([]);
 
-    useEffect(() => {
-        console.log('Loading new input parameters');
-        Api.getDoc(modelName)
-            .then(function (response) {
-                if (response.status === 200) {
-                    setDoc(response.data)
-                    updateInputParameters(response.data.map(d => d["Real Name"]))
-                } else {
-                    throw new Error("Error loading model documentation")
-                }
-            })
-            .catch((err) => console.error(err));
-    }, [modelName, updateInputParameters])
+    useEffect(function _loadInputParameters() {
+        // console.log('Loading new input parameters');
+        if (modelName && modelName !== 'undefined') {
+            Api.getDoc(modelName)
+                .then(function (response) {
+                    if (response.status === 200) {
+                        setDoc(response.data)
+                        setInputParameters(response.data.map(d => d["Real Name"]))
+                    } else {
+                        throw new Error("Error loading model documentation")
+                    }
+                })
+                .catch((err) => console.error("Error loading input parameters", err));
+        }
+        return () => {
+            setDoc([]);
+        }
+    }, [modelName, setInputParameters])
 
     return (
         <>
@@ -37,7 +42,7 @@ export function ModelDocTab({ tabTitle }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {doc.map((k, i) => {
+                            {doc.sort((a, b) => (a["Py Name"].toLowerCase() > b["Py Name"].toLowerCase())).map((k, i) => {
                                 return (
                                     <tr key={`tr-item-${i}`}>
                                         <td className="td-30">{k["Real Name"]}</td>

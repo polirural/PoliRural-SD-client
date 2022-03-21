@@ -41,3 +41,12 @@
     background: lightgray;
     text-decoration: underline;
    }
+
+   .dd-suggestions {
+       position: absolute;
+       z-index: 10000;
+       height: auto;
+       background-color: #ffffff;
+       max-height: 25vh;
+       overflow-y: scroll;
+   }

@@ -98,7 +98,7 @@ export default function Curve(curveType, xRange, yRange) {
             }
             break;
         default:
-            console.error('Unhandled', curveType);
+            console.error('Unhandled curveType specified', curveType);
     }
     return d;
 }

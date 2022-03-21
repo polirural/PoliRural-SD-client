@@ -13,7 +13,7 @@ export function TypeAheadDropDown({ placeholder, name, items, onChange, value })
   const onTextChange = useCallback(function _onTextChange(event) {
     let tmpValue = event.target.value;
     if (tmpValue.length > 0) {
-      const regex = new RegExp(`^${tmpValue}`, `i`);
+      const regex = new RegExp(`  ${tmpValue}`, `i`);
       let suggestions = items.sort().filter(v => regex.test(v));
       setSuggestions(suggestions);
     } else {
@@ -21,12 +21,12 @@ export function TypeAheadDropDown({ placeholder, name, items, onChange, value })
     }
     setCurrentValue(tmpValue);
   }, [items]);
-  
+
   const handleSelectSuggestion = useCallback(function _handleSelectSuggestion(suggestion) {
     setCurrentValue(suggestion);
     setSuggestions([]);
   }, [])
-  
+
   useEffect(function _handleOnChangeParent() {
     onChange({
       target: {
@@ -61,7 +61,7 @@ export function TypeAheadDropDown({ placeholder, name, items, onChange, value })
         value={value}
         type="text"
         autoComplete="off" />
-      <ul>
+      <ul className="dd-suggestions">
         {suggestionItems}
       </ul>
     </div >
@@ -77,7 +77,7 @@ TypeAheadDropDown.defaultProps = {
 }
 
 TypeAheadDropDown.defaultProps = {
-  placeholder: "...",
+  placeholder: "",
   name: "typeahead-input-field",
   onChange: (event) => console.debug("onChange not supplied", event)
 }
