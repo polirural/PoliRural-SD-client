@@ -137,8 +137,6 @@ export function ResultTab({ tabTitle }) {
         return (
             <Col>
                 <div style={{
-                    // "height": "90vh",
-                    // "overflowY": "auto",
                     "overflowX": "auto"
                 }}>
                     <h4 className="my-3">Result table</h4>

@@ -142,9 +142,6 @@ export function SavedScenariosTab({ tabTitle }) {
                     })}
                 </tbody>
             </Table>
-            {/* <pre>
-                {JSON.stringify(filter, null, 2)}
-            </pre> */}
         </>
     )
 }

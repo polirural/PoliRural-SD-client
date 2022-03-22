@@ -25,6 +25,7 @@ function WizardView() {
     // Load model config whenever it changes
     useEffect(function _loadModelConfig() {
         if (!modelName) return console.debug("No model name specified", modelName);
+
         // Clear all before loading model configuration
         setFilter(null);
         setDefaultFilter(null);
@@ -35,8 +36,10 @@ function WizardView() {
 
         // Load all data
         setTimeout(() => {
-            Api.getConfig(modelName)
-                .then(function _handleResponse(res) {
+            Promise.all([
+                Api.getConfig(modelName)
+            ]).then(function _handleResponse(resArray) {
+                const [res] = resArray;
                     if (!res.data || !res.data.value) {
                         throw new Error("No model data in response");
                     }
