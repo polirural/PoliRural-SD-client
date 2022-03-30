@@ -43,7 +43,7 @@ function WizardView() {
                         modelName,
                         filter: modelScenarios.value.default,
                         defaultFilter: modelScenarios.value.default,
-                        inputParameters: modelDoc.map(d => ''+d["Py Name"]),
+                        inputParameters: modelDoc.map(d => '' + d["Py Name"]),
                         displayParameters: Object.keys(modelData[0]),
                         scenarios: modelScenarios.value,
                         compareScenario: "default",
@@ -56,12 +56,12 @@ function WizardView() {
                 })
             }).catch(err => {
                 console.error(err);
-            }).finally(()=>{
+            }).finally(() => {
                 dispatch({
                     type: "modelLoading",
                     payload: false
                 })
-    
+
             })
         }).catch(err => {
             console.error(err);
@@ -74,7 +74,6 @@ function WizardView() {
                 <Row>
                     <Col xs={12} md={4} lg={3} className="filter-bar">
                         <Wizard title={modelConfig.title} children={[]} key={`wizard-${modelName}`} />
-                        <Loading show={modelLoading} message="Executing model, please wait..." tagLine="Trees that are slow to grow bear the best fruit." />
                     </Col>
                     <Col xs={12} md={8} lg={9} className="p-3">
                         <Tabs defaultActiveKey="model-results" id="results-tabs">
@@ -117,6 +116,7 @@ function WizardView() {
                     </Col>
                 </Row>
             )}
+            <Loading show={modelLoading} message="Executing model, please wait..." tagLine="Trees that are slow to grow bear the best fruit." />
         </Container >
     )
 }
