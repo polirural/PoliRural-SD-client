@@ -1,7 +1,6 @@
 import { Col, Container, Row, Tab, Tabs } from 'react-bootstrap';
 import { useContext, useEffect } from 'react';
 
-import FilterContext from './context/FilterContext';
 import Wizard from './components/Wizard';
 import { useMatch } from 'react-router-dom';
 import ResultTab from './components/ResultTab';
@@ -9,55 +8,65 @@ import SavedScenariosTab from './components/SavedScenariosTab';
 import ModelDocTab from './components/ModelDocTab';
 import ConfigTab from './components/ConfigTab';
 import Api from './utils/Api';
-import { clone } from './utils/Object';
-import { DefaultConfig, USER_ROLES } from './config/config';
+import { USER_ROLES } from './config/config';
+import ReducerContext from './context/ReducerContext';
+import Loading from './components/Loading';
 
 function WizardView() {
 
-    const { auth, modelConfig, setModelName, updateModelConfig, setModelConfig, setFilter, setDefaultFilter, setScenarios, setRunModel, setCompareScenario } = useContext(FilterContext);
     const { modelName } = useMatch('/:modelName')?.params;
+    const { state, dispatch } = useContext(ReducerContext);
+    const { auth, modelConfig, modelLoading } = state;
 
     useEffect(() => {
-        setModelName(modelName);
-    }, [modelName, setModelName])
 
-    // Save model configuration
-    // Load model config whenever it changes
-    useEffect(function _loadModelConfig() {
-        if (!modelName) return console.debug("No model name specified", modelName);
+        dispatch({
+            type: "modelLoading",
+            payload: true
+        });
 
-        // Clear all before loading model configuration
-        setFilter(null);
-        setDefaultFilter(null);
-        setModelConfig(null);
-        setScenarios(null);
-        setCompareScenario('default');
-        setRunModel(false);
-
-        // Load all data
-        setTimeout(() => {
-            Promise.all([
-                Api.getConfig(modelName)
-            ]).then(function _handleResponse(resArray) {
-                const [res] = resArray;
-                    if (!res.data || !res.data.value) {
-                        throw new Error("No model data in response");
+        Promise.all([
+            Api.getConfig(modelName),
+            Api.getDoc(modelName),
+            Api.getScenarios(modelName)
+        ]).then((res) => {
+            if (!res.every(r => r.status === 200)) throw new Error("An issue occurred");
+            let modelConfig = res[0].data;
+            let modelDoc = res[1].data;
+            let modelScenarios = res[2].data;
+            Api.runModel(modelName, modelScenarios.value.default).then(modelRes => {
+                let modelData = modelRes.data;
+                dispatch({
+                    type: "initModel",
+                    payload: {
+                        modelConfig: modelConfig.value,
+                        modelName,
+                        filter: modelScenarios.value.default,
+                        defaultFilter: modelScenarios.value.default,
+                        inputParameters: modelDoc.map(d => ''+d["Py Name"]),
+                        displayParameters: Object.keys(modelData[0]),
+                        scenarios: modelScenarios.value,
+                        compareScenario: "default",
+                        modelDoc,
+                        modelData,
+                        modelBaselineData: modelData,
+                        runModel: false,
+                        modelLoading: false
                     }
-                    setModelConfig(res.data.value);
                 })
-                .catch(function _handleError(err) {
-                    console.warn("Could not load model configuration, reading default and updating in database")
-                    updateModelConfig({
-                        ...clone(DefaultConfig),
-                        modelName
-                    });
-                }).finally(() => {
-                    setTimeout(() => {
-                        setRunModel(true);
-                    }, 50)
-                });
-        }, 50)
-    }, [modelName, setModelConfig, updateModelConfig, setDefaultFilter, setFilter, setScenarios, setRunModel, setCompareScenario]);
+            }).catch(err => {
+                console.error(err);
+            }).finally(()=>{
+                dispatch({
+                    type: "modelLoading",
+                    payload: false
+                })
+    
+            })
+        }).catch(err => {
+            console.error(err);
+        })
+    }, [modelName, dispatch])
 
     return (
         <Container fluid className="vh-100">
@@ -65,6 +74,7 @@ function WizardView() {
                 <Row>
                     <Col xs={12} md={4} lg={3} className="filter-bar">
                         <Wizard title={modelConfig.title} children={[]} key={`wizard-${modelName}`} />
+                        <Loading show={modelLoading} message="Executing model, please wait..." tagLine="Trees that are slow to grow bear the best fruit." />
                     </Col>
                     <Col xs={12} md={8} lg={9} className="p-3">
                         <Tabs defaultActiveKey="model-results" id="results-tabs">

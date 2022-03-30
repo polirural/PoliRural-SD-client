@@ -6,12 +6,11 @@ import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import HomeView from './HomeView';
 import { LinkContainer } from 'react-router-bootstrap';
 import WizardView from './WizardView';
-import { useContext, useEffect, useMemo } from 'react';
-import Api from './utils/Api';
+import { useContext, useMemo } from 'react';
 import LoginView from './LoginView';
 import ProtectedRoute from './components/ProtectedRoute';
-import FilterContext from './context/FilterContext';
 import { PersonFill, UnlockFill } from 'react-bootstrap-icons';
+import ReducerContext from './context/ReducerContext';
 
 export const models = {
   "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: true },
@@ -28,14 +27,8 @@ export const models = {
 
 function App() {
 
-  const { auth } = useContext(FilterContext);
-
-  useEffect(() => {
-    async function update() {
-      await Api.set("test", "last-login", new Date())
-    }
-    update();
-  }, [])
+  const { state } = useContext(ReducerContext)
+  const { auth } = state;
 
   const modelNavDropdownItems = useMemo(function _generateModels() {
     return Object.keys(models).sort().filter(k => models[k].active).map((k, i) => {

@@ -2,12 +2,14 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Button, Col, Form, Modal, Row } from "react-bootstrap";
 import { Navigate } from "react-router-dom";
 import Loading from "./components/Loading";
-import FilterContext from "./context/FilterContext";
+import ReducerContext from "./context/ReducerContext";
 import Api from "./utils/Api";
 
 export function LoginView({ logout }) {
 
-    const { auth, setAuth } = useContext(FilterContext);
+    const { state, dispatch } = useContext(ReducerContext);
+    const { auth } = state;
+
     const [authenticating, setAuthenticating] = useState(false);
 
     const [authRequest, setAuthRequest] = useState({
@@ -27,17 +29,21 @@ export function LoginView({ logout }) {
 
     const doLogout = useCallback(
         () => {
-            setAuth()
+            dispatch({ type: "logout" });
             Api.authorized(null)
             setAuthenticating(false);
         },
-        [setAuth]
+        [dispatch]
     )
 
     const doLogin = useCallback(
         () => {
+            setAuthenticating(true);
             Api.doLogin(authRequest).then(res => {
-                setAuth(res.data);
+                dispatch({
+                    type: "login",
+                    payload: res.data
+                });
                 Api.authorized(res.data);
             }).catch((err) => {
                 doLogout()
@@ -45,7 +51,7 @@ export function LoginView({ logout }) {
                 setAuthenticating(false);
             })
         },
-        [authRequest, setAuth, doLogout]
+        [authRequest, dispatch, doLogout]
     )
 
     useEffect(() => {

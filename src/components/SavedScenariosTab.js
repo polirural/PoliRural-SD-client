@@ -1,64 +1,96 @@
 import { useCallback, useContext, useEffect } from "react";
 import { Button, Table } from "react-bootstrap";
 import PropTypes from 'prop-types';
-import FilterContext from "../context/FilterContext";
 import Api from "../utils/Api";
 import { Folder2Open, Trash } from "react-bootstrap-icons";
+import ReducerContext from "../context/ReducerContext";
+import { setKeyVal } from "../context/ReducerProvider";
 
 export function SavedScenariosTab({ tabTitle }) {
 
-    const { filter, setFilter, scenarios, setScenarios, setDefaultFilter, modelConfig } = useContext(FilterContext)
+    const { state, dispatch } = useContext(ReducerContext)
+    const { filter, scenarios, modelConfig } = state
     const { modelName } = modelConfig;
 
     const saveScenario = useCallback((newScenarioDefn) => {
         var name = window.prompt("Please specify a name for the saved scenario");
         if (!name) return console.debug("No name specified, cancelled");
-        setScenarios(currentScenarios => {
-            var tmpScenarios = { ...currentScenarios };
-            tmpScenarios[name] = newScenarioDefn;
-            setScenarios(tmpScenarios);
-            Api.setScenarios(modelName, tmpScenarios)
-                .then(res => {
-                    console.debug("Saved scenario", res);
+        var tmpScenarios = {
+            ...scenarios,
+            [name]: newScenarioDefn
+        };
+        Api.setScenarios(modelName, tmpScenarios)
+            .then(res => {
+                dispatch({
+                    type: "setKeyVal",
+                    payload: {
+                        key: "scenarios",
+                        val: tmpScenarios
+                    }
                 })
-                .catch(err => {
-                    console.error("Error saving scenario", err);
-                });
-        });
-    }, [setScenarios, modelName]);
+                console.debug("Saved scenario", res);
+            })
+            .catch(err => {
+                console.error("Error saving scenario", err);
+            });
+    }, [dispatch, scenarios, modelName]);
 
     const loadScenario = useCallback((scenarioName) => {
-        const scenarioDefn = { ...scenarios[scenarioName] };
-        setFilter(scenarioDefn);
-    }, [setFilter, scenarios])
+        dispatch({
+            type: "setKeyVal",
+            payload: {
+                key: "filter",
+                val: { ...scenarios[scenarioName] }
+            }
+        });
+    }, [dispatch, scenarios])
 
     const deleteScenario = useCallback((scenarioName) => {
         if (!window.confirm(`Are you sure you wish to delete the saved scenario: "${scenarioName}"`)) return console.debug("Did not delete scenario");
 
-        setScenarios(currentScenarios => {
-            let tmpScenarios = { ...currentScenarios };
-            delete tmpScenarios[scenarioName];
-            Api.setScenarios(modelName, tmpScenarios)
-                .then(function _handleResponse(res) {
-                    console.log("Updated scenarios after delete");
+        let tmpScenarios = { ...scenarios };
+        delete tmpScenarios[scenarioName];
+        Api.setScenarios(modelName, tmpScenarios)
+            .then(function _handleResponse(res) {
+                console.log("Updated scenarios after delete");
+                dispatch({
+                    type: "setKeyVal",
+                    payload: {
+                        key: "scenarios",
+                        val: tmpScenarios
+                    }
                 })
-                .catch(function _handleError(err) {
-                    console.error("Error setting scenario", err);
-                });
-            return tmpScenarios;
-        });
-
-    }, [setScenarios, modelName]);
+            })
+            .catch(function _handleError(err) {
+                console.error("Error setting scenario", err);
+            });
+        return tmpScenarios;
+    }, [dispatch, modelName, scenarios]);
 
     const createDefaultScenario = useCallback(() => {
         if (modelName) {
-            let defaultScenario = { default: {} };
-            Api.setScenarios(modelName, defaultScenario).then(res => {
-                setScenarios(defaultScenario);
-                setDefaultFilter(defaultScenario);
-            })
+            let defaultScenarios = { default: {} };
+            Api.setScenarios(modelName, defaultScenarios)
+                .then(res => {
+                    // setScenarios(defaultScenario);
+                    dispatch({
+                        type: "setKeyVal",
+                        payload: {
+                            key: "scenarios",
+                            val: defaultScenarios
+                        }
+                    })
+                    // setDefaultFilter(defaultScenario);
+                    dispatch({
+                        type: "setKeyVal",
+                        payload: {
+                            key: "defaultScenario",
+                            val: defaultScenarios.default
+                        }
+                    })
+                })
         }
-    }, [modelName, setScenarios, setDefaultFilter])
+    }, [modelName, dispatch])
 
     useEffect(function _loadSavedScenarios() {
         if (modelName) {
@@ -68,8 +100,10 @@ export function SavedScenariosTab({ tabTitle }) {
                     if (!res.data || !res.data.value) {
                         createDefaultScenario();
                     } else {
-                        setScenarios(res.data.value);
-                        setFilter(res.data.value["default"]);
+                        // setScenarios(res.data.value);
+                        dispatch(setKeyVal("scenarios", res.data.value));
+                        // setFilter(res.data.value["default"]);
+                        dispatch(setKeyVal("filter", res.data.value["default"]))
                     }
                 })
                 .catch(function _handleError(err) {
@@ -77,7 +111,7 @@ export function SavedScenariosTab({ tabTitle }) {
                     createDefaultScenario();
                 });
         }
-    }, [setScenarios, modelName, createDefaultScenario, setFilter]);
+    }, [dispatch, modelName, createDefaultScenario]);
 
     return (
         <>

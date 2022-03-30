@@ -1,20 +1,18 @@
 import React, { useMemo, useCallback, useEffect, useState, useContext } from "react";
-import { Spinner, Table, Button, ButtonGroup, ButtonToolbar, Dropdown, DropdownButton, Row, Col, Modal } from "react-bootstrap";
+import { Table, Button, ButtonGroup, ButtonToolbar, Dropdown, DropdownButton, Row, Col } from "react-bootstrap";
 import LineChart from "./LineChart";
 import XLSX from 'xlsx';
-import FilterContext from "../context/FilterContext";
 import PropTypes from 'prop-types';
 import Api from "../utils/Api";
 import { CHART_Y_STARTS_AT } from "../config/config";
+import ReducerContext from "../context/ReducerContext";
+import { setKeyVal } from "../context/ReducerProvider";
 
 export function ResultTab({ tabTitle }) {
 
-    // const [runModel, setRunModel] = useState(true);
-    const [loadedDisplayParameters, setLoadedDisplayParameters] = useState(false);
-    const { filter, scenarios, modelConfig, setDisplayParameters, runModel, setRunModel, setModelLoading, modelLoading, compareScenario, setCompareScenario } = useContext(FilterContext);
+    const { state, dispatch } = useContext(ReducerContext);
+    const { filter, scenarios, modelConfig, runModel, modelLoading, compareScenario, modelData, modelBaselineData } = state;
     const { modelName, visualizations } = modelConfig;
-    const [data, setData] = useState([]);
-    const [defaultData, setDefaultData] = useState([]);
     const [origo, setOrigo] = useState(CHART_Y_STARTS_AT.DATA);
 
     // Load model result data
@@ -22,29 +20,28 @@ export function ResultTab({ tabTitle }) {
         if (!scenarios || !scenarios["default"] || !modelName || modelLoading) {
             return;
         }
-        setRunModel(false);
-        setModelLoading(true);
+        dispatch({
+            type: "runModel"
+        })
 
         let tmpFilter = filter ? filter : scenarios["default"];
         Api.runModel(modelName, tmpFilter)
             .then((response) => {
-                // console.log("Executing current", filter);
                 if (!Array.isArray(response.data) || response.data.length < 1) {
                     throw new Error("No data returned from model");
                 }
-                setData(response.data)
-                if (!loadedDisplayParameters) {
-                    setDisplayParameters(Object.keys(response.data[0]).sort());
-                    setLoadedDisplayParameters(true);
-                }
+                dispatch(setKeyVal("modelData", response.data));
             })
             .catch((error) => {
-                console.warn("No saved display parameters");
+                console.warn("Error executing model");
             })
             .finally(() => {
-                setModelLoading(false);
+                dispatch({
+                    type: "modelLoading",
+                    payload: false
+                })
             });
-    }, [filter, setRunModel, setModelLoading, loadedDisplayParameters, setDisplayParameters, setLoadedDisplayParameters, modelLoading, scenarios]);
+    }, [filter, modelLoading, scenarios, dispatch]);
 
     // Load results from comparison scenario
     const executeCompareScenario = useCallback(function _loadCompareScenario(scenarioName) {
@@ -53,16 +50,23 @@ export function ResultTab({ tabTitle }) {
         };
         Api.runModel(modelName, scenarios[scenarioName])
             .then(function _handleResponse(response) {
-                setDefaultData(response.data);
+                dispatch(setKeyVal("modelBaselineData", response.data))
             })
             .catch(function _handleError(error) {
                 console.error("Error loading compare scenario", error);
+            })
+            .finally(() => {
+                dispatch({
+                    type: "modelLoading",
+                    payload: false
+                })
             });
 
-    }, [scenarios, modelName, modelLoading]);
+    }, [scenarios, modelName, modelLoading, dispatch]);
+
     // Create chart elements for dashboard
     var charts = useMemo(() => {
-        if (data.length === 0) return null;
+        if (modelData.length === 0) return null;
 
         var _charts = [];
 
@@ -72,15 +76,15 @@ export function ResultTab({ tabTitle }) {
 
             // Create data series
             // eslint-disable-next-line
-            var series = data.map(row => {
+            var series = modelData.map(row => {
                 return { x: row.IDX_TIME, y: row[dataKey] }
             });
 
             var defaultSeries = [];
 
-            if (defaultData) {
+            if (modelBaselineData) {
                 // eslint-disable-next-line
-                var defaultSeries = defaultData.map(row => {
+                var defaultSeries = modelBaselineData.map(row => {
                     return { x: row.IDX_TIME, y: row[dataKey] }
                 });
             }
@@ -102,7 +106,7 @@ export function ResultTab({ tabTitle }) {
 
         }
         return _charts;
-    }, [visualizations, data, defaultData, origo])
+    }, [visualizations, modelData, modelBaselineData, origo])
 
     // Create table element for dashboard
     const table = useMemo(() => {
@@ -120,7 +124,7 @@ export function ResultTab({ tabTitle }) {
             </tr>
         );
 
-        let resultRows = data.filter(row => +row["IDX_TIME"] >= 2020).map((row, rowIdx) => {
+        let resultRows = modelData.filter(row => +row["IDX_TIME"] >= 2020).map((row, rowIdx) => {
             let cols = colKeys.map((colKey, colIdx) => {
                 let val = row[colKey];
                 if (!isNaN(parseFloat(val))) {
@@ -133,7 +137,7 @@ export function ResultTab({ tabTitle }) {
             </tr>)
         })
 
-        if (data.length === 0) return;
+        if (modelData.length === 0) return;
         return (
             <Col>
                 <div style={{
@@ -152,7 +156,7 @@ export function ResultTab({ tabTitle }) {
             </Col>
         )
 
-    }, [data, visualizations])
+    }, [modelData, visualizations])
 
     // Define function to download table
     const downloadExcel = useCallback((data) => {
@@ -170,31 +174,19 @@ export function ResultTab({ tabTitle }) {
      * if different from current scenario name
      */
     const handleSelectCompareScenario = useCallback((scenarioName) => {
-        setCompareScenario(prevScenario => {
-            if (prevScenario !== scenarioName) {
-                executeCompareScenario(scenarioName);
-            }
-            return scenarioName
-        })
-    }, [executeCompareScenario, setCompareScenario]);
+        if (compareScenario !== scenarioName) {
+            dispatch(setKeyVal("compareScenario", scenarioName));
+            executeCompareScenario(scenarioName);
+        }
+    }, [executeCompareScenario, compareScenario, dispatch]);
 
     useEffect(() => {
         if (!runModel || !modelName) return;
-        if (defaultData.length === 0) {
+        if (modelBaselineData.length === 0) {
             executeCompareScenario(compareScenario || 'default');
         }
         executeCurrentScenario(modelName);
-    }, [executeCurrentScenario, modelName, runModel, compareScenario, executeCompareScenario, defaultData])
-
-    // Reset data, comparison and run model when changing to a new model
-    useEffect(() => {
-        setData([]);
-        setDefaultData([]);
-        return () => {
-            setData([]);
-            setDefaultData([]);
-        }
-    }, [modelName]);
+    }, [executeCurrentScenario, modelName, runModel, compareScenario, executeCompareScenario, modelBaselineData])
 
     return (
         <>
@@ -202,7 +194,10 @@ export function ResultTab({ tabTitle }) {
             <p>The current scenario is displayed with a red line, the compare scenario is displayed with a blue line</p>
             <ButtonToolbar>
                 <ButtonGroup key="bg-run" className="me-2">
-                    <Button size="sm" onClick={() => setRunModel(true)}>Run model</Button>
+                    <Button size="sm" onClick={() => {
+                        // setRunModel(true);
+                        dispatch(setKeyVal("runModel", true));
+                    }}>Run model</Button>
                 </ButtonGroup>
                 <ButtonGroup key="bg-scenario" className="me-2">
                     <DropdownButton size="sm" id="dropdown-basic" title={`Compare to: ${compareScenario}`}>
@@ -212,7 +207,7 @@ export function ResultTab({ tabTitle }) {
                     </DropdownButton>
                 </ButtonGroup>
                 <ButtonGroup key="bg-download" className="me-2">
-                    <Button size="sm" onClick={() => downloadExcel(data)}>Download to Excel</Button>
+                    <Button size="sm" onClick={() => downloadExcel(modelData)}>Download to Excel</Button>
                 </ButtonGroup>
                 {origo === CHART_Y_STARTS_AT.DATA && (
                     <ButtonGroup key="bg-origo" className="me-2">
@@ -225,17 +220,6 @@ export function ResultTab({ tabTitle }) {
                     </ButtonGroup>
                 )}
             </ButtonToolbar>
-            <Modal
-                show={modelLoading}
-                centered
-                backdrop="static"
-            >
-                <Modal.Body className="text-center">
-                    <Spinner animation="border" variant="primary" className="mt-5" />
-                    <h4 className="my-5">{modelLoading}</h4>
-                    <p>Trees that are slow to grow bear the best fruit.</p>
-                </Modal.Body>
-            </Modal>
             <Row>
                 {Array.isArray(charts) && charts.length > 0 && (charts)}
             </Row>

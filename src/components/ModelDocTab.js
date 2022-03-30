@@ -1,38 +1,17 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext } from "react";
 import { Table } from "react-bootstrap";
-import FilterContext from "../context/FilterContext";
-import Api from "../utils/Api";
+import ReducerContext from "../context/ReducerContext";
 
 export function ModelDocTab({ tabTitle }) {
 
-    const { setInputParameters, modelConfig } = useContext(FilterContext);
-    const { modelName } = modelConfig;
-    const [doc, setDoc] = useState([]);
-
-    useEffect(function _loadInputParameters() {
-        // console.log('Loading new input parameters');
-        if (modelName && modelName !== 'undefined') {
-            Api.getDoc(modelName)
-                .then(function (response) {
-                    if (response.status === 200) {
-                        setDoc(response.data)
-                        setInputParameters(response.data.map(d => d["Real Name"]))
-                    } else {
-                        throw new Error("Error loading model documentation")
-                    }
-                })
-                .catch((err) => console.error("Error loading input parameters", err));
-        }
-        return () => {
-            setDoc([]);
-        }
-    }, [modelName, setInputParameters])
-
+    const { state } = useContext(ReducerContext);
+    const { modelDoc } = state;
+    
     return (
         <>
             <h3 className="my-3">{tabTitle}</h3>
             {
-                Array.isArray(doc) && doc.length > 0 && (
+                Array.isArray(modelDoc) && modelDoc.length > 0 && (
                     <Table striped hover size="sm" responsive="sm">
                         <thead>
                             <tr>
@@ -42,7 +21,7 @@ export function ModelDocTab({ tabTitle }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {doc.sort((a, b) => (a["Py Name"].toLowerCase() > b["Py Name"].toLowerCase())).map((k, i) => {
+                            {modelDoc.sort((a, b) => (a["Py Name"].toLowerCase() > b["Py Name"].toLowerCase())).map((k, i) => {
                                 return (
                                     <tr key={`tr-item-${i}`}>
                                         <td className="td-30">{k["Real Name"]}</td>
