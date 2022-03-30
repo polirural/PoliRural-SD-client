@@ -48,6 +48,10 @@ export function ResultTab({ tabTitle }) {
         if (!scenarios || !scenarios[scenarioName] || !modelName || modelLoading) {
             return;
         };
+        dispatch({
+            type: "modelLoading",
+            payload: true
+        });
         Api.runModel(modelName, scenarios[scenarioName])
             .then(function _handleResponse(response) {
                 dispatch(setKeyVal("modelBaselineData", response.data))
