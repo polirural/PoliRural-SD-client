@@ -3,7 +3,7 @@ import './DrawLineChart.scss';
 import * as d3 from 'd3';
 
 import Curve, { curveTypes } from './../utils/Curve';
-import { Dropdown, Form, Row } from 'react-bootstrap';
+import { Dropdown, Form, Row, Col, Button } from 'react-bootstrap';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import PropTypes from 'prop-types';
@@ -58,8 +58,15 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
                     value: buildFilterSeries(chartData, numberFormat)
                 }
             };
+            onChange(tmpFilterData);
+        } else {
+            onChange({
+                target: {
+                    name,
+                    value: tmpFilterData
+                }
+            });
         }
-        onChange(tmpFilterData);
     }, [onChange, name, numberFormat]);
 
     // Generate a curve based on a curveType keyword, invoked by drop-down
@@ -71,9 +78,6 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
 
     // Main chart drawing function
     var chart = useD3((svg) => {
-
-        // // Do nothing unless data exists
-        // if (!data || !Array.isArray(data) || data.length === 0) return;
 
         // Get dynamic width of chart
         width = +svg.style("width").replace("px", "");
@@ -265,26 +269,35 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
                 <g className="y-axis" />
             </svg>
             <Row className="text-right">
-                <Dropdown>
-                    <Dropdown.Toggle size="sm" variant="link">
-                        Use template
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu>
-                        {Object.keys(curveTypes)
-                            .map(function _forEachCurveType(key, idx) {
-                                return (
-                                    <Dropdown.Item
-                                        key={`dd-item-${idx}`}
-                                        onClick={function _onSelectCurveType() {
-                                            return genCurve(curveTypes[key])
-                                        }}>
-                                        {curveTypes[key]}
-                                    </Dropdown.Item>
-                                )
-                            })
-                        }
-                    </Dropdown.Menu>
-                </Dropdown>
+                <Col>
+                    <Dropdown>
+                        <Dropdown.Toggle size="sm" variant="link">
+                            Use template
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                            {Object.keys(curveTypes)
+                                .map(function _forEachCurveType(key, idx) {
+                                    return (
+                                        <Dropdown.Item
+                                            key={`dd-item-${idx}`}
+                                            onClick={function _onSelectCurveType() {
+                                                return genCurve(curveTypes[key])
+                                            }}>
+                                            {curveTypes[key]}
+                                        </Dropdown.Item>
+                                    )
+                                })
+                            }
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Col>
+                <Col>
+                    <div className="d-grid">
+                        <Button size="sm" variant="link" onClick={() => {
+                            onDiagramChange(null);
+                        }}>Clear</Button>
+                    </div>
+                </Col>
             </Row>
         </div>
     );

@@ -85,6 +85,12 @@ function reducer(state, action) {
                 ...state,
                 auth: action.payload
             }
+        case 'resetDefaultFilter':
+            return {
+                ...state,
+                scenarios: action.payload.scenarios,
+                filter: action.payload.filter
+            }
         default:
             throw new Error(`Reducer action not implemented: ${action.type}`);
     }
@@ -99,62 +105,6 @@ export function setKeyVal(key, val) {
         }
     }
 }
-// const providerValue = {
-//     // The scenario filters
-//     updateFilter,
-//     setFilter,
-//     filter,
-
-//     // The compare scenario filter
-//     updateDefaultFilter,
-//     setDefaultFilter,
-//     defaultFilter,
-
-//     // The boolean flag that determines if to show help 
-//     setShowHelp,
-//     showHelp,
-
-//     // The list of available input parameters to the model
-//     setInputParameters,
-//     inputParameters,
-
-//     // The list of available output parameters from the model
-//     setDisplayParameters,
-//     displayParameters,
-
-//     // The model configuration
-//     updateModelConfig,
-//     setModelConfig,
-//     modelConfig,
-
-//     // The stored model scenarios
-//     setScenarios,
-//     scenarios,
-
-//     // Flag to determine whether to run model
-//     setRunModel,
-//     runModel,
-
-//     // Flag to determine if model is presently loading
-//     setModelLoading,
-//     modelLoading,
-
-//     // Session authentication state
-//     setAuth,
-//     auth,
-
-//     // Switch input parameter mode between list and wizard mode
-//     setInputParameterMode,
-//     inputParameterMode,
-
-//     // Set model name
-//     setModelName,
-//     modelName,
-
-//     // Set compare scenario
-//     setCompareScenario,
-//     compareScenario
-// }
 
 export function ReducerProvider({ children }) {
 
