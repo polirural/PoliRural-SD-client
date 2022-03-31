@@ -7,10 +7,10 @@ import { InputParameter } from './InputParameter';
 import EditTitle from './EditTitle';
 import Api from '../utils/Api';
 import ReducerContext from '../context/ReducerContext';
-import { DefaultConfig, INPUT_PARAMETER_TYPE } from '../config/config';
+import { INPUT_PARAMETER_TYPE } from '../config/config';
 import { setKeyVal } from '../context/ReducerProvider';
-import { clone } from '../utils/Object';
 import DialogPasteConfig from './DialogPasteConfig';
+import { resetModelConfig, updateModelConfig } from '../utils/Model';
 
 function ConfigTab({ tabTitle }) {
 
@@ -23,41 +23,25 @@ function ConfigTab({ tabTitle }) {
     const [pasteModelConfig, setPasteModelConfig] = useState(false)
     const [selectedParameter, setSelectedParameter] = useState(null)
 
-    const updateModelConfig = useCallback((modelConfig) => {
-        return Api.setConfig(modelConfig.modelName, modelConfig)
-            .then(function _handleResponse(res) {
-                dispatch({
-                    type: 'setKeyVal',
-                    payload: {
-                        key: "modelConfig",
-                        val: modelConfig
-                    }
-                })
-            })
-            .catch(function handleError(err) {
-                console.error("Error updating model configuration", err);
-            })
-    }, [dispatch]);
-
     const deleteInputParameter = useCallback(function _deleteInputParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the input parameter "${paramName}" from the model configuration?`)) return;
 
         var tmpModelConfig = { ...modelConfig }
         delete tmpModelConfig.parameters[paramName];
-        updateModelConfig(tmpModelConfig);
+        updateModelConfig(tmpModelConfig, dispatch);
         return tmpModelConfig;
 
-    }, [updateModelConfig, modelConfig])
+    }, [modelConfig, dispatch])
 
     const deleteDisplayParameter = useCallback(function _deleteDisplayParameter(paramName) {
         if (!window.confirm(`Are you sure you want to delete the display parameter "${paramName}" from the model configuration?`)) return;
 
         var tmpModelConfig = { ...modelConfig }
         delete tmpModelConfig.visualizations[paramName];
-        updateModelConfig(tmpModelConfig);
+        updateModelConfig(tmpModelConfig, dispatch);
         return tmpModelConfig;
 
-    }, [updateModelConfig, modelConfig])
+    }, [modelConfig, dispatch])
 
     const addUpdateInputParameter = useCallback(function _addUpdateInputParameter(paramName, newParamDefn) {
 
@@ -71,10 +55,10 @@ function ConfigTab({ tabTitle }) {
         tmpConfig.parameters = tmpParams;
         setEditInputParameter(false);
         setSelectedParameter(null);
-        updateModelConfig(tmpConfig);
+        updateModelConfig(tmpConfig, dispatch);
         return tmpConfig;
 
-    }, [updateModelConfig, modelConfig])
+    }, [dispatch, modelConfig])
 
     const addUpdateDisplayParameter = useCallback(function _addUpdateDisplayParameter(paramName, newParamDefn) {
         if (modelConfig.visualizations[paramName] && !window.confirm(`Are you sure you want to update the existing display parameter "${paramName}" in the model configuration?`)) return;
@@ -86,10 +70,10 @@ function ConfigTab({ tabTitle }) {
         tmpModelConfig.visualizations = tmpVisualizations;
         setEditDisplayParameter(false);
         setSelectedParameter(null);
-        updateModelConfig(tmpModelConfig);
+        updateModelConfig(tmpModelConfig, dispatch);
         return tmpModelConfig;
 
-    }, [updateModelConfig, modelConfig])
+    }, [dispatch, modelConfig])
 
     /**
      * Modal dialogue for editing model title
@@ -104,14 +88,14 @@ function ConfigTab({ tabTitle }) {
                     updateModelConfig({
                         ...modelConfig,
                         title: data.title
-                    });
+                    }, dispatch);
                 }}
                 cancel={() => {
                     setEditModelTitle(false);
                 }}
             />
         )
-    }, [modelConfig, updateModelConfig, editModelTitle])
+    }, [modelConfig, dispatch, editModelTitle])
 
     /**
      * Modal dialogue for editing model input parameters
@@ -215,108 +199,14 @@ function ConfigTab({ tabTitle }) {
         })
     }, [modelConfig, setEditDisplayParameter, deleteDisplayParameter]);
 
-    const doResetConfig = useCallback((modelName) => {
-        return Promise.all([
-            Api.getDoc(modelName),
-            Api.runModel(modelName, {})
-        ]).then((res) => {
-            let mDoc = res[0].data;
-            let mRes = res[1].data;
-            let mResParams = Object.keys(mRes[0]);
-
-            // Create new model config object based on template
-            let nmc = {
-                ...clone(DefaultConfig),
-                modelName
-            };
-
-            // Add input parameters
-            Object.keys(nmc.parameters).forEach((paramName, paramIdx) => {
-                let paramDoc = mDoc.find((docData) => docData["Py Name"] === paramName);
-                if (!paramDoc) {
-                    console.debug(`Omitted input parameter ${paramName}, not present in model documentation`)
-                    delete nmc.parameters[paramName];
-                    return;
-                }
-
-                // Set default values
-                let pDef = nmc.parameters[paramName]
-                pDef.order = pDef.order || -1;
-
-                if (pDef.type === INPUT_PARAMETER_TYPE.GRAPH) {
-                    // Handle graphs
-                    pDef.defaultValue = mRes.reduce((graphData, rowData) => {
-                        if (Object.keys(rowData).indexOf(paramName) > -1) {
-                            graphData.push({
-                                x: +rowData["IDX_TIME"],
-                                y: +rowData[paramName]
-                            });
-                        } else if (paramDoc && Object.keys(rowData).indexOf(paramDoc["Py Name"]) > -1) {
-                            graphData.push({
-                                x: +rowData["IDX_TIME"],
-                                y: +rowData[paramDoc["Py Name"]]
-                            });
-                        }
-                        return graphData;
-                    }, [])
-                } else if (pDef.type === INPUT_PARAMETER_TYPE.NUMBER) {
-                    // Handle number inputs
-                    pDef.defaultValue = paramDoc["Eqn"];
-                } else {
-                    // Handle others
-                    pDef.defaultValue = null;
-                }
-                return;
-            })
-
-            // Add visualization parameters
-            Object.keys(nmc.visualizations).forEach((curr) => {
-                if (mResParams.indexOf(curr) === -1) {
-                    console.debug(`Omitted visualization ${curr}, not present in model outputs`)
-                    delete nmc.visualizations[curr];
-                }
-            }, {})
-
-            // Load default filter
-            let defaultFilter = Object.keys(nmc.parameters).reduce((flt, k1) => {
-                let v = nmc.parameters[k1].defaultValue;
-                if (!v) return flt;
-                if (Array.isArray(v) && v.length === 0) return flt;
-                if (Array.isArray(v)) {
-                    flt[k1] = v;
-                } else {
-                    flt[k1] = +v;
-                }
-                return flt;
-            }, {});
-
-            // First save model config
-            updateModelConfig(nmc)
-                .then(res => {
-                    console.warn("Updated and saved model config")
-                    return Api.setScenarios(modelName, {
-                        default: defaultFilter
-                    })
-                }).then(res => {
-                    console.warn("Saved filter as default scenario")
-                    dispatch(setKeyVal("filter", defaultFilter));
-                    console.warn("Updated filter state")
-                    return true;
-                }).catch(err => {
-                    console.error("Error resetting configuration", err);
-                    return false;
-                });
-        })
-    }, [dispatch, updateModelConfig]);
-
     // Reset configuration to default
     const resetConfig = useCallback(() => {
         if (!window.confirm("Are you sure you wish to reset the input parameters and visualizations to the default state? All customization will be lost.")) return;
         if ("reset" !== window.prompt("I know this sounds paranoid, but please type 'reset' into this field to reset the configuration", "rese")) return;
         // Load documentation and run model without parameters
-        doResetConfig(modelName).then(res => {
+        resetModelConfig(modelName, dispatch).then(res => {
         });
-    }, [modelName, doResetConfig]);
+    }, [modelName, dispatch]);
 
     /**
      * Read default values from model where possible

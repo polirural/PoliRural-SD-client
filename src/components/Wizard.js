@@ -32,7 +32,6 @@ function Wizard() {
     const [page, setPage] = useState(0);
 
     const onChange = useCallback((event) => {
-        console.log(event);
         if (!event) return;
         dispatch({
             type: "updateFilter",

@@ -7,10 +7,11 @@ import ResultTab from './components/ResultTab';
 import SavedScenariosTab from './components/SavedScenariosTab';
 import ModelDocTab from './components/ModelDocTab';
 import ConfigTab from './components/ConfigTab';
-import Api from './utils/Api';
 import { USER_ROLES } from './config/config';
 import ReducerContext from './context/ReducerContext';
 import Loading from './components/Loading';
+import { initModel, resetModelConfig } from './utils/Model';
+import Api from './utils/Api';
 
 function WizardView() {
 
@@ -19,52 +20,12 @@ function WizardView() {
     const { auth, modelConfig, modelLoading } = state;
 
     useEffect(() => {
-
-        dispatch({
-            type: "modelLoading",
-            payload: true
-        });
-
-        Promise.all([
-            Api.getConfig(modelName),
-            Api.getDoc(modelName),
-            Api.getScenarios(modelName)
-        ]).then((res) => {
-            if (!res.every(r => r.status === 200)) throw new Error("An issue occurred");
-            let modelConfig = res[0].data;
-            let modelDoc = res[1].data;
-            let modelScenarios = res[2].data;
-            Api.runModel(modelName, modelScenarios.value.default).then(modelRes => {
-                let modelData = modelRes.data;
-                dispatch({
-                    type: "initModel",
-                    payload: {
-                        modelConfig: modelConfig.value,
-                        modelName,
-                        filter: modelScenarios.value.default,
-                        defaultFilter: modelScenarios.value.default,
-                        inputParameters: modelDoc.map(d => '' + d["Py Name"]),
-                        displayParameters: Object.keys(modelData[0]),
-                        scenarios: modelScenarios.value,
-                        compareScenario: "default",
-                        modelDoc,
-                        modelData,
-                        modelBaselineData: modelData,
-                        runModel: false,
-                        modelLoading: false
-                    }
-                })
-            }).catch(err => {
-                console.error(err);
-            }).finally(() => {
-                dispatch({
-                    type: "modelLoading",
-                    payload: false
-                })
-
-            })
+        Api.getConfig(modelName).then(modelConfigRes => {
+            console.info(`Initializing "${modelName}" model`);
+            initModel(modelName, modelConfigRes.data.value, dispatch);
         }).catch(err => {
-            console.error(err);
+            console.info(`Resetting "${modelName}" model configuration, missing or invalid config`, err);
+            resetModelConfig(modelName, dispatch);
         })
     }, [modelName, dispatch])
 
