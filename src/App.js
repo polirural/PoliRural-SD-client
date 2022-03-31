@@ -22,6 +22,7 @@ export const models = {
   "hame_v2_p": { name: "Hame", component: <WizardView />, image: './images/hame.jpg', active: true },
   "monaghan_v2_p": { name: "Monaghan", component: <WizardView />, image: './images/monaghan.jpg', active: true },
   "segobriga_v2_p": { name: "Segobriga", component: <WizardView />, image: './images/segobriga.jpg', active: true },
+  "slovak_region_v1_2_p": { name: "Slovakia region", component: <WizardView />, image: './images/slovakia.jpg', active: true },
   "vidzeme_v2_p": { name: "Vidzeme", component: <WizardView />, image: './images/vidzeme.jpg', active: true },
 }
 
