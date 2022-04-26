@@ -82,6 +82,18 @@ class Api {
         return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/auth/login`, authRequest);
     }
 
+    static doRegister(authRequest) {
+        return axios.post(`${process.env.REACT_APP_SDM_API_ENDPOINT}/auth/register`, authRequest);
+    }
+
+    static getUserList() {
+        return axios.get(`${process.env.REACT_APP_SDM_API_ENDPOINT}/auth/user-list`, {"auth": {"username": "runar", "password": "runar"}});
+    }
+
+    static deleteUser(username) {
+        return axios.delete(`${process.env.REACT_APP_SDM_API_ENDPOINT}/auth/delete-user/${username}`, {"auth": {"username": "runar", "password": "runar"}});
+    }
+
     // Session storage
     static sessionSet(key, val) {
         sessionStorage.setItem(key, JSON.stringify(val))

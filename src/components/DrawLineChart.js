@@ -3,6 +3,7 @@ import './DrawLineChart.scss';
 import * as d3 from 'd3';
 
 import Curve, { curveTypes } from './../utils/Curve';
+import { customRound } from './../utils/Math';
 import { Dropdown, Form, Row, Col, Button } from 'react-bootstrap';
 import React, { useCallback, useEffect, useState } from 'react';
 
@@ -34,7 +35,7 @@ function buildChartSeries(filterData, numberFormat) {
     return series;
 };
 
-export function DrawLineChart({ margin, width, height, xRange, yRange, name, label, numberFormat, value, onChange }) {
+export function DrawLineChart({ margin, width, height, xRange, yRange, name, label, numberFormat, value, onChange, xTicks, yTicks }) {
 
     const [data, setData] = useState(null);
 
@@ -50,7 +51,7 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
     // Whenever the chart updates its data, propagate to the onChange method supplied from parent as a control event
     const onDiagramChange = useCallback(function _onDiagramChange(chartData) {
         setData(chartData);
-        let tmpFilterData = null;
+        let tmpFilterData = undefined;
         if (chartData && Array.isArray(chartData) && chartData.length > 0) {
             tmpFilterData = {
                 target: {
@@ -94,7 +95,7 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
 
         // Create X-axis line
         const xAxis = (g) =>
-            g.attr("transform", `translate(0,${height - margin.bottom})`)
+            g.attr("transform", `translate(0, ${height - margin.bottom})`)
                 .call(d3.axisBottom(scaleX).ticks(5, "d"))
                 .call(g => g.attr("pointer-events", "none"));
 
@@ -105,6 +106,21 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
         // Determine Y-axis range
         const [minY, maxY] = yRange;
 
+        var ySpan = maxY - minY;
+
+        let yTickNotation = "d";
+        if ((ySpan / yTicks) <= 0.01) {
+            yTickNotation = ".3f";
+        } else if (ySpan / yTicks < 0.1) {
+            yTickNotation= ".2f";
+        } else if (ySpan / yTicks < 1) {
+            yTickNotation= ".1f";
+        } else if (ySpan / yTicks < 1000) {
+            yTickNotation= "d";
+        } else {            
+            yTickNotation= "s";
+        }
+
         // Create Y-axis scale
         const scaleY = d3
             .scaleLinear()
@@ -113,8 +129,8 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
 
         // Create Y-axis line
         const yAxis = (g) =>
-            g.attr("transform", `translate(${margin.left},0)`)
-                .call(d3.axisLeft(scaleY).ticks(null, "s"))
+            g.attr("transform", `translate(${margin.left}, 0)`)
+                .call(d3.axisLeft(scaleY).ticks(5, yTickNotation))
                 .call((g) => g.attr("pointer-events", "none")
                     .append("text")
                     .attr("class", "noselect")
@@ -187,7 +203,7 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
             if (state) {
                 const [minX, maxX] = scaleX.domain();
                 const [minY, maxY] = scaleY.domain();
-                let x0 = Math.round(scaleX.invert(e.layerX));
+                let x0 = customRound(scaleX.invert(e.layerX), 0.25);
                 let y0 = scaleY.invert(e.layerY);
                 if ((coords.length === 0 || coords[coords.length - 1].x < x0)
                     && (x0 >= minX && x0 <= maxX)
@@ -239,7 +255,7 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
             .attr("y", margin.top)
             .attr("width", width - (margin.left + margin.right))
             .attr("height", height - (margin.top + margin.bottom))
-            .attr("fill", "white")
+            .attr("fill", "#f0f0f0")
             .lower()
             .on("mousemove", onMove)
             .on("mousedown", onDown)
@@ -257,17 +273,17 @@ export function DrawLineChart({ margin, width, height, xRange, yRange, name, lab
     }, [margin, width, height, data]);
 
     return (
-        <div className="sdt-draw-line-chart mx-auto" width={width} height={height} >
+        <div className="sdt-draw-line-chart mx-auto">
             {label && (<Form.Label>{label}</Form.Label>)}
-            <svg
-                ref={chart}
-                height="100%"
-                width="100%"
-            >
-                <g className="plot-area" />
-                <g className="x-axis" />
-                <g className="y-axis" />
-            </svg>
+            <div className="sdt-draw-line-chart-container" style={{height: height}}>
+                <svg
+                    ref={chart}
+                >
+                    <g className="plot-area" />
+                    <g className="x-axis" />
+                    <g className="y-axis" />
+                </svg>
+            </div>
             <Row className="text-right">
                 <Col>
                     <Dropdown>
@@ -316,19 +332,23 @@ DrawLineChart.propTypes = {
         index: PropTypes.arrayOf(PropTypes.number),
         data: PropTypes.arrayOf(PropTypes.number)
     }),
-    onChange: PropTypes.func
+    onChange: PropTypes.func,
+    xTicks: PropTypes.number,
+    yTicks: PropTypes.number
 }
 
 DrawLineChart.defaultProps = {
-    margin: { top: 15, right: 15, bottom: 35, left: 35 },
-    width: 320,
-    height: 160,
+    margin: { top: 15, right: 25, bottom: 55, left: 55 },
+    width: 360,
+    height: 240,
     label: undefined,
-    numberFormat: d3.format(".1f"),
+    numberFormat: d3.format(".3f"),
     value: {
         index: [],
         data: []
     },
+    xTicks: 5,
+    yTicks: 5,
     onChange: (event) => console.log("Not implemented", event)
 }
 

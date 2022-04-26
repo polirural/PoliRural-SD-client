@@ -4,10 +4,11 @@ import { Button, Table } from 'react-bootstrap';
 import { Trash, Pen, Pencil, ArrowClockwise, InputCursor, GraphUp, ClipboardPlus, ClipboardCheck } from 'react-bootstrap-icons';
 import { DisplayParameter } from './DisplayParameter';
 import { InputParameter } from './InputParameter';
+import { ProtectedContainer } from './ProtectedContainer';
 import EditTitle from './EditTitle';
 import Api from '../utils/Api';
 import ReducerContext from '../context/ReducerContext';
-import { INPUT_PARAMETER_TYPE } from '../config/config';
+import { INPUT_PARAMETER_TYPE, USER_ROLES } from '../config/config';
 import { setKeyVal } from '../context/ReducerProvider';
 import DialogPasteConfig from './DialogPasteConfig';
 import { resetModelConfig, updateModelConfig } from '../utils/Model';
@@ -255,7 +256,9 @@ function ConfigTab({ tabTitle }) {
 
                 } else if (paramDef.type === INPUT_PARAMETER_TYPE.NUMBER) {
                     // Handle number inputs
-                    paramMap[paramName] = paramDoc["Eqn"];
+                    if (!isNaN(parseFloat(paramDoc["Eqn"]))) {
+                        paramMap[paramName] = parseFloat(paramDoc["Eqn"]);
+                    }
                 }
                 return paramMap;
             }, {});
@@ -273,7 +276,6 @@ function ConfigTab({ tabTitle }) {
                         filter: defaultFilter
                     }
                 });
-                console.log(defaultFilter);
             })
 
         }).catch((err) => {
@@ -371,9 +373,11 @@ function ConfigTab({ tabTitle }) {
             <div className="d-grid mb-3">
                 <Button variant="primary" onClick={() => resetDefaultFilter()}><ArrowClockwise /> Reset default filter</Button>
             </div>
-            <div className="d-grid">
-                <Button variant="danger" onClick={() => resetConfig()}><ArrowClockwise /> Reset configuration</Button>
-            </div>
+            <ProtectedContainer requireRoles={[USER_ROLES.SUPERADMIN]}>
+                <div className="d-grid">
+                    <Button variant="danger" onClick={() => resetConfig()}><ArrowClockwise /> Reset configuration</Button>
+                </div>
+            </ProtectedContainer>
             <DialogPasteConfig show={pasteModelConfig} onCancel={() => setPasteModelConfig(false)} onSave={(pastedModelConfig) => {
                 setPasteModelConfig(false);
                 try {

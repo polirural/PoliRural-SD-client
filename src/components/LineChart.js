@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-
+import './LineChart.scss';
 import { Button, Row } from 'react-bootstrap';
 import React, { useCallback, useState } from 'react';
 import { getSVGString, svgString2Image } from './../utils/SVGDownload';
@@ -26,7 +26,7 @@ function getData() {
     });
 }
 
-export function LineChart({ margin, width, height, xRange, yRange, data, baseline, title, origo }) {
+export function LineChart({ margin, width, height, xRange, yRange, data, baseline, title, origo, yTicks, xTicks }) {
 
     const [svgNode, setSvgNode] = useState(null);
 
@@ -79,7 +79,7 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
             .style("alignment-baseline", "middle")
     }, []);
 
-    var chart = useD3((svg) => {
+    const chart = useD3((svg) => {
 
         width = parseFloat(svg.style("width"));
         var xRange1, yRange1;
@@ -112,16 +112,31 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
 
         const xAxis = (g) =>
             g.attr("transform", `translate(0,${height - margin.bottom})`)
-                .call(d3.axisBottom(scaleX).ticks(5, ""))
+                .call(d3.axisBottom(scaleX).ticks(xTicks, "d"))
                 .call(g => g.attr("pointer-events", "none"));
 
-        svg.select(".x-axis").call(xAxis);
+        svg.select("#x-axis")
+            .call(xAxis);
 
         // Setup Y-axis
         let [minY, maxY] = yRange;
-
         // Correct if origo is set to zero
         minY = origo === CHART_Y_STARTS_AT.DATA ? minY : 0;
+
+        var ySpan = maxY - minY;
+
+        let yTickNotation = "d";
+        if ((ySpan / yTicks) <= 0.01) {
+            yTickNotation = ".3f";
+        } else if (ySpan / yTicks < 0.1) {
+            yTickNotation= ".2f";
+        } else if (ySpan / yTicks < 1) {
+            yTickNotation= ".1f";
+        } else if (ySpan / yTicks < 1000) {
+            yTickNotation= "d";
+        } else {            
+            yTickNotation= "s";
+        }
 
         const scaleY = d3
             .scaleLinear()
@@ -130,7 +145,7 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
 
         const yAxis = (g) =>
             g.attr("transform", `translate(${margin.left},0)`)
-                .call(d3.axisLeft(scaleY).ticks(null, "s"))
+                .call(d3.axisLeft(scaleY).ticks(yTicks, yTickNotation))
                 .call((g) => g.attr("pointer-events", "none")
                     .append("text")
                     .attr("class", "noselect")
@@ -139,7 +154,8 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
                     .attr("text-anchor", "start")
                     .text(data.y1));
 
-        svg.select(".y-axis").call(yAxis);
+        svg.select("#y-axis")
+            .call(yAxis);
 
         // Create permanent line function
         var line = d3.line()
@@ -189,17 +205,18 @@ export function LineChart({ margin, width, height, xRange, yRange, data, baselin
 
     return (
         // <div className="mx-auto" width={width} height={height} >
-        <div className="m-3">
+        <div className="polirural-line-chart m-3">
             <h4>{title}</h4>
             <div className="mx-auto" >
                 <svg
                     ref={chart}
-                    width="100%"
-                    height={height}            >
+                    width={"100%"}
+                    height={height}
+                >
+                    <g id="x-axis" className="axis" />
+                    <g id="y-axis" className="axis" />
                     <g id="plot-area" className="plot-area" />
                     <g id="legend-area" className="legend-area" />
-                    <g id="x-axis" className="x-axis" />
-                    <g id="y-axis" className="y-axis" />
                 </svg>
             </div>
             <Row className="mx-3">
@@ -224,17 +241,21 @@ LineChart.propTypes = {
         x: PropTypes.number,
         y: PropTypes.number
     })),
-    origo: PropTypes.number
+    origo: PropTypes.number,
+    xTicks: PropTypes.number,
+    yTicks: PropTypes.number
 }
 
 LineChart.defaultProps = {
-    margin: { top: 15, right: 15, bottom: 35, left: 35 },
+    margin: { top: 15, right: 25, bottom: 55, left: 55 },
     width: 320,
     height: 240,
     data: getData(),
     baseline: null,
     title: "Chart title",
-    origo: CHART_Y_STARTS_AT.DATA
+    origo: CHART_Y_STARTS_AT.DATA,
+    xTicks: 5,
+    yTicks: 5
 }
 
 export default LineChart;

@@ -16,10 +16,11 @@ export function ResultTab({ tabTitle }) {
     const [origo, setOrigo] = useState(CHART_Y_STARTS_AT.DATA);
 
     // Load model result data
-    const executeCurrentScenario = useCallback((modelName) => {
+    const executeCurrentScenario = useCallback((modelName) => {        
         if (!scenarios || !scenarios["default"] || !modelName || modelLoading) {
-            return;
+            return;        
         }
+        
         dispatch({
             type: "runModel"
         })
@@ -185,7 +186,9 @@ export function ResultTab({ tabTitle }) {
     }, [executeCompareScenario, compareScenario, dispatch]);
 
     useEffect(() => {
-        if (!runModel || !modelName) return;
+        if (!runModel || !modelName) {
+            return
+        };
         if (modelBaselineData.length === 0) {
             executeCompareScenario(compareScenario || 'default');
         }

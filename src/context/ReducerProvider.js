@@ -33,6 +33,9 @@ function reducer(state, action) {
                 ...tmpState.filter,
                 [action.payload.key]: action.payload.val
             }
+            if (action.payload.val === null || action.payload.val === undefined) {
+                delete tmpState.filter[action.payload.key];
+            }
             return tmpState;
         case 'updateDefaultFilter':
             let defaultFilter = state.defaultFilter || {};
@@ -65,7 +68,6 @@ function reducer(state, action) {
         case 'closeWizardRun':
             return {
                 ...state,
-                modelLoading: true,
                 runModel: true,
                 inputParameterMode: VIEW_MODE.LIST
             }
