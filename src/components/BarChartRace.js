@@ -102,6 +102,9 @@ export function BarChartRace(props) {
 
     }, [data, labelAccessor, valueAccessor, timeAccessor, usePctGrowth]);
 
+    /**
+     * Run the race
+     */
     const runRace = useCallback(() => {
 
         if (!chart.current) return;
