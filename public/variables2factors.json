@@ -1,0 +1,16 @@
+{
+  "broadband_infrastructure_population_covered": "http://www.semanticweb.org/attractiveness/anthropic",
+  "workforce_specialization": "http://www.semanticweb.org/attractiveness/economic",
+  "farms": "http://www.semanticweb.org/attractiveness/economic",
+  "tourist_visitors": "http://www.semanticweb.org/attractiveness/economic",
+  "Natural_Capital": "http://www.semanticweb.org/attractiveness/natural",
+  "proportion_of_newcomers": "http://www.semanticweb.org/attractiveness/social",
+  "shared_knowledge": "http://www.semanticweb.org/attractiveness/social",
+  "social_innovation": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_INFANTS": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_ELDERLY_POPULATION": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_SCHOOL_AGE_POPULATION": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_POST_SCHOOL_POPULATION": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_WORKING_AGE_POPULATION": "http://www.semanticweb.org/attractiveness/social",
+  "proportion_NEWCOMERS": "http://www.semanticweb.org/attractiveness/social"
+}

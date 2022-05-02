@@ -1,9 +1,9 @@
+import './BarChartRace.scss';
 import { useRef, useCallback, useMemo } from "react";
 import { useD3 } from "../hooks/useD3";
-import * as d3 from 'd3';
-import './BarChartRace.scss';
-import PropTypes from 'prop-types';
 import { Button, Row } from "react-bootstrap";
+import PropTypes from 'prop-types';
+import * as d3 from 'd3';
 
 const halo = function (text, strokeWidth) {
     text.select(function () { return this.parentNode.insertBefore(this.cloneNode(true), this); })
@@ -12,12 +12,31 @@ const halo = function (text, strokeWidth) {
         .style('stroke-width', strokeWidth)
         .style('stroke-linejoin', 'round')
         .style('opacity', 1);
-
 }
 
 export function BarChartRace(props) {
 
-    let { title, description, caption, tickDuration, top_n, height, width, margin, startTime, endTime, timeStep, valueAccessor, timeAccessor, labelAccessor, data, usePctGrowth, valueLabelFormat } = props;
+    let {
+        title,
+        description,
+        caption,
+        tickDuration,
+        top_n,
+        height,
+        width,
+        margin,
+        startTime,
+        endTime,
+        timeStep,
+        valueAccessor,
+        timeAccessor,
+        labelAccessor,
+        data,
+        usePctGrowth,
+        valueLabelFormat,
+        timeLabelFormat,
+        run
+    } = props;
 
     const chart = useRef({
         currentTime: startTime
@@ -25,9 +44,6 @@ export function BarChartRace(props) {
 
     // Determine bar padding
     let barPadding = useMemo(() => (height - (margin.bottom + margin.top)) / (top_n * 5), [height, margin, top_n]);
-
-    // Determine precision of time-step
-    let timeStepPrecision = useMemo(() => ('' + timeStep).indexOf(".") > -1 ? ('' + timeStep).split(".")[1].length : 0, [timeStep]);
 
     // Preprocess data
     let procData = useMemo(() => {
@@ -106,7 +122,8 @@ export function BarChartRace(props) {
 
             timeSlice.forEach((d, i) => d.rank = i);
 
-            x.domain([0, d3.max(timeSlice, d => d.value)]);
+            const [xmin, xmax] = d3.extent(timeSlice, d => d.value);
+            x.domain([0, xmax]);
 
             svg.select('.xAxis')
                 .transition()
@@ -134,7 +151,10 @@ export function BarChartRace(props) {
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('width', d => x(d.value) - x(0) - 1)
+                .attr('width', d => {
+                    let w = x(d.value) - x(0) - 1;
+                    return w > 0 ? w : 1;
+                })
                 .attr('y', d => y(d.rank) + 5);
 
             bars
@@ -180,7 +200,7 @@ export function BarChartRace(props) {
                         return "end";
                     } else {
                         return "start";
-                    }                                        
+                    }
                 })
 
             labels
@@ -228,18 +248,22 @@ export function BarChartRace(props) {
                 .attr('y', d => y(top_n + 1) + 5)
                 .remove();
 
-            timeText.html(~~currentTime);
+            timeText.html(timeLabelFormat(currentTime));
 
             if (currentTime === endTime) clearInterval(chart.current.ticker);
 
-            currentTime = +d3.format(`.${timeStepPrecision}f`)((+currentTime) + timeStep);
+            currentTime = (+currentTime) + timeStep;
 
         }, tickDuration);
-    }, [startTime, endTime, tickDuration, timeStep, top_n, barPadding, timeStepPrecision, procData, valueLabelFormat]);
+    }, [startTime, endTime, tickDuration, timeStep, top_n, barPadding, procData, valueLabelFormat, timeLabelFormat]);
 
     const chartRef = useD3((svg) => {
 
         if (!procData) return;
+
+        if (chart.current.ticker) {
+            clearInterval(chart.current.ticker);
+        }
 
         // Remove what is there on second load
         svg.selectAll("*").remove();
@@ -271,8 +295,10 @@ export function BarChartRace(props) {
 
         timeSlice.forEach((d, i) => d.rank = i);
 
+        const [xmin, xmax] = d3.extent(timeSlice, d => d.value);
+
         let x = d3.scaleLinear()
-            .domain([0, d3.max(timeSlice, d => d.value)])
+            .domain([0, xmax])
             .range([margin.left, width - margin.right - 65]);
 
         let y = d3.scaleLinear()
@@ -298,7 +324,10 @@ export function BarChartRace(props) {
             .append('rect')
             .attr('class', 'bar')
             .attr('x', x(0) + 1)
-            .attr('width', d => x(d.value) - x(0) - 1)
+            .attr('width', d => {
+                let w = x(d.value) - x(0) - 1;
+                return w > 0 ? w : 1;
+            })
             .attr('y', d => y(d.rank) + 5)
             .attr('height', y(1) - y(0) - barPadding)
             .style('fill', d => d.colour);
@@ -322,7 +351,7 @@ export function BarChartRace(props) {
                     return "end";
                 } else {
                     return "start";
-                }                                        
+                }
             })
 
         svg.selectAll('text.valueLabel')
@@ -339,7 +368,7 @@ export function BarChartRace(props) {
             .attr('x', width - margin.right)
             .attr('y', height - 25)
             .style('text-anchor', 'end')
-            .html(~~chart.current.currentTime)
+            .html(timeLabelFormat(chart.current.currentTime))
             .call(halo, 10);
 
         chart.current = {
@@ -351,6 +380,10 @@ export function BarChartRace(props) {
             y: y
         };
 
+        if (run === true) {
+            runRace();
+        }
+
         return () => {
             if (chart.current.ticker) {
                 clearInterval(chart.current.ticker);
@@ -358,7 +391,7 @@ export function BarChartRace(props) {
             svg.selectAll("*").remove();
         }
 
-    }, [procData, barPadding, timeStepPrecision, chart, valueLabelFormat]);
+    }, [procData, barPadding, chart, valueLabelFormat, timeLabelFormat, run]);
 
     return (
         <div className="polirural-barchart-race p-3">
@@ -399,7 +432,10 @@ BarChartRace.propTypes = {
         bottom: PropTypes.number,
         left: PropTypes.number
     }),
-    valueLabelFormat: PropTypes.func
+    valueLabelFormat: PropTypes.func,
+    timeLabelFormat: PropTypes.func,
+    onComplete: PropTypes.func,
+    run: PropTypes.bool
 }
 
 BarChartRace.defaultProps = {
@@ -414,7 +450,12 @@ BarChartRace.defaultProps = {
         left: 0
     },
     usePctGrowth: false,
-    valueLabelFormat: d3.format(',.2f') 
+    valueLabelFormat: d3.format(',.2f'),
+    timeLabelFormat: d3.format('d'),
+    onComplete: () => {
+        console.debug("Not implemented");
+    },
+    run: false
 }
 
 export default BarChartRace;
