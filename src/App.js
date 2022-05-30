@@ -20,7 +20,7 @@ import UserListView from './UserListView';
 export const models = {
   "apulia_v2_p": { name: "Apulia", component: <WizardView />, image: './images/apulia.jpg', active: true },
   "central_bohemia_p": { name: "Central Bohemian Region", component: <WizardView />, image: './images/central-bohemia.jpg', active: true },
-  "central_greece_v2_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg', active: true },
+  "central_greece_v3_p": { name: "Central Greece", component: <WizardView />, image: './images/central-greece.jpg', active: true },
   "flanders_land_use2_p": { name: "Flanders", component: <WizardView />, image: './images/flanders.jpg', active: true },
   "galilee_v2_p": { name: "Galilee", component: <WizardView />, image: './images/galilee.jpg', active: true },
   "gevgelija_v2_p": { name: "Gevgelija", component: <WizardView />, image: './images/gevgelija.jpg', active: true },

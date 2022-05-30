@@ -1,18 +1,9 @@
 import './BarChartRace.scss';
 import { useRef, useCallback, useMemo } from "react";
 import { useD3 } from "../hooks/useD3";
-import { Button, Row } from "react-bootstrap";
 import PropTypes from 'prop-types';
 import * as d3 from 'd3';
 
-const halo = function (text, strokeWidth) {
-    text.select(function () { return this.parentNode.insertBefore(this.cloneNode(true), this); })
-        .style('fill', '#ffffff')
-        .style('stroke', '#ffffff')
-        .style('stroke-width', strokeWidth)
-        .style('stroke-linejoin', 'round')
-        .style('opacity', 1);
-}
 
 export function BarChartRace(props) {
 
@@ -21,7 +12,7 @@ export function BarChartRace(props) {
         description,
         caption,
         tickDuration,
-        top_n,
+        topN,
         height,
         width,
         margin,
@@ -32,18 +23,138 @@ export function BarChartRace(props) {
         timeAccessor,
         labelAccessor,
         data,
-        usePctGrowth,
+        calcMethod,
         valueLabelFormat,
         timeLabelFormat,
-        run
+        run,
+        colourScale,
+        colourAccessor,
+        labelFontSize,
+        labelPadding,
+        onComplete
     } = props;
+
+    // Determine bar padding
+    let barPadding = useMemo(() => {
+        return (height - (margin.bottom + margin.top)) / (topN * 5)
+    }, [height, margin, topN]);
+
+    const _barWidth = useCallback((x) => {
+        return (d) => {
+            let w = x(d.value) - x(0) - 1;
+            return w > 0 ? w : 1;
+        }
+    }, []);
+
+    const _barHeight = useCallback((y) => {
+        return (d) => {
+            return y(1) - y(0) - barPadding;
+        }
+    }, [barPadding]);
+
+    const _barX = useCallback((x) => {
+        return (d) => {
+            return x(0) + 1
+        }
+    }, [])
+
+    const _barY = useCallback((y) => {
+        return (d) => {
+            return y(d.rank) + 5
+        }
+    }, []);
+
+    const _translateXY = useCallback((x, y) => {
+        return (d, i, n) => {
+
+            let dx;
+            if (n[i].getComputedTextLength() < (x(d.value) - labelPadding)) {
+                dx = x(d.value) - labelPadding;
+            } else {
+                dx = x(d.value) + labelPadding;
+            }
+            let dy = y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1;
+            return `translate(${dx} ${dy})`;
+        }
+    }, [labelPadding])
+
+    const _textAnchor = useCallback((x) => {
+        return (d, i, n) => {
+            if (n[i].getComputedTextLength() < (x(d.value) - 8)) {
+                return "end";
+            } else {
+                return "start";
+            }
+        }
+    }, []);
+
+    const _textSpan = useCallback((x) => {
+        return (sel) => {
+
+            let em = Math.ceil(labelFontSize * 1.2);
+
+            // Add name
+            sel.append("tspan")
+                .attr("font-size", `${labelFontSize}px`)
+                .attr("x", 0)
+                .attr("dy", -em * 0.5)
+                .attr("class", "name")
+                .text(d => d.name);
+
+            // Add value
+            sel.append("tspan")
+                .attr("font-size", `${labelFontSize}px`)
+                .attr("x", 0)
+                .attr("dy", em)
+                .attr("class", "value")
+                .text(d => valueLabelFormat(d.value));
+        }
+
+    }, [valueLabelFormat, labelFontSize])
+
+
+    const _drawBars = useCallback((x, y, barPadding, transition = false) => {
+
+        return (sel) => {
+            let ne = sel.append('rect')
+                .attr('class', d => `bar ${d.name.replace(/\s/g, '_')}`)
+                .attr('x', _barX(x))
+                .attr('y', _barY(y))
+                .attr('width', _barWidth(x))
+                .attr('height', _barHeight(y))
+                .style('fill', d => d.colour);
+            if (transition) {
+                ne.transition()
+                    .duration(tickDuration)
+                    .ease(d3.easeLinear)
+                    .attr('y', _barY(y));
+            }
+            // return sel;
+        }
+    }, [tickDuration, _barHeight, _barWidth, _barY, _barX])
+
+    const _drawLabels = useCallback((x, y, className) => {
+        return (sel) => {
+            sel.append('text')
+                .call(_textSpan(x))
+                .attr('class', className)
+                .attr("transform", _translateXY(x, y))
+                .style("text-anchor", _textAnchor(x))
+        }
+    }, [_textSpan, _textAnchor, _translateXY]);
+
+    const _halo = useCallback((text, strokeWidth) => {
+        text.select(function () { return this.parentNode.insertBefore(this.cloneNode(true), this); })
+            .style('fill', '#ffffff')
+            .style('stroke', '#ffffff')
+            .style('stroke-width', strokeWidth)
+            .style('stroke-linejoin', 'round')
+            .style('opacity', 1);
+    }, []);
 
     const chart = useRef({
         currentTime: startTime
     });
-
-    // Determine bar padding
-    let barPadding = useMemo(() => (height - (margin.bottom + margin.top)) / (top_n * 5), [height, margin, top_n]);
 
     // Preprocess data
     let procData = useMemo(() => {
@@ -54,7 +165,7 @@ export function BarChartRace(props) {
                 value: isNaN(+valueAccessor(d)) ? 0 : +valueAccessor(d),
                 lastValue: null, // Dummy value
                 timeStep: +timeAccessor(d),
-                colour: d3.hsl(Math.random() * 360, 0.75, 0.75),
+                colour: colourScale(colourAccessor(d)),
                 keep: false
             }
         });
@@ -75,7 +186,7 @@ export function BarChartRace(props) {
             d["keep"] = false;
         });
 
-        if (usePctGrowth) {
+        if (calcMethod === BarChartRace.CALC_METHOD.PCT_DIFF) {
             d3.group(tmpData, d => d.name).forEach(
                 nameSlice => {
                     let sortedSlice = nameSlice.sort((a, b) => a.timeStep - b.timeStep);
@@ -98,9 +209,36 @@ export function BarChartRace(props) {
             });
         }
 
+        if (calcMethod === BarChartRace.CALC_METHOD.ACCUMULATED) {
+            d3.group(tmpData, d => d.name).forEach(
+                nameSlice => {
+                    let sortedSlice = nameSlice.sort((a, b) => a.timeStep - b.timeStep);
+                    let accValue = d3.cumsum(sortedSlice, d=>d.value);
+                    let accLastValue = d3.cumsum(sortedSlice, d=>d.lastValue);
+                    for (var i1 = 1; i1 < sortedSlice.length; i1++) {
+                        sortedSlice[i1].value = accValue[i1];
+                        sortedSlice[i1].lastValue = accLastValue[i1];
+                        sortedSlice[i1].keep = true;
+                    }
+                }
+            );
+            tmpData = tmpData.filter(d => d.keep === true);
+            tmpData.forEach((d, i) => {
+                delete d.keep;
+            });
+            console.log("accumulated", tmpData)
+        }
+
         return tmpData;
 
-    }, [data, labelAccessor, valueAccessor, timeAccessor, usePctGrowth]);
+    }, [data, labelAccessor, valueAccessor, timeAccessor, calcMethod, colourAccessor, colourScale]);
+
+    const stopRace = useCallback(() => {
+        onComplete()
+        if (chart.current.ticker) {
+            clearInterval(chart.current.ticker);
+        }
+    }, [onComplete])
 
     /**
      * Run the race
@@ -121,12 +259,12 @@ export function BarChartRace(props) {
 
             let timeSlice = procData.filter(d => +d.timeStep === currentTime && !isNaN(d.value))
                 .sort((a, b) => b.value - a.value)
-                .slice(0, top_n);
+                .slice(0, topN);
 
             timeSlice.forEach((d, i) => d.rank = i);
 
             const [xmin, xmax] = d3.extent(timeSlice, d => d.value);
-            x.domain([0, xmax]);
+            x.domain([xmin > 0 ? 0 : xmin, xmax < 0 ? 0 : xmax]);
 
             svg.select('.xAxis')
                 .transition()
@@ -136,129 +274,87 @@ export function BarChartRace(props) {
 
             let bars = svg.selectAll('.bar').data(timeSlice, d => d.name);
 
+            // Add new bars
             bars
                 .enter()
-                .append('rect')
-                .attr('class', d => `bar ${d.name.replace(/\s/g, '_')}`)
-                .attr('x', x(0) + 1)
-                .attr('width', d => x(d.value) - x(0) - 1)
-                .attr('y', d => y(top_n + 1) + 5)
-                .attr('height', y(1) - y(0) - barPadding)
-                .style('fill', d => d.colour)
-                .transition()
-                .duration(tickDuration)
-                .ease(d3.easeLinear)
-                .attr('y', d => y(d.rank) + 5);
+                .call(_drawBars(x, y, barPadding, true))
 
+            // Transition all bars
             bars
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('width', d => {
-                    let w = x(d.value) - x(0) - 1;
-                    return w > 0 ? w : 1;
-                })
-                .attr('y', d => y(d.rank) + 5);
+                .attr('width', _barWidth(x))
+                .attr('x', _barX(x))
+                .attr('y', _barY(y));
 
+            // Remove old bars
             bars
                 .exit()
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('width', d => x(d.value) - x(0) - 1)
-                .attr('y', d => y(top_n + 1) + 5)
+                .attr('width', _barWidth(x))
+                .attr('y', d => y(topN + 1) + 5)
                 .remove();
 
             let labels = svg.selectAll('.label')
                 .data(timeSlice, d => d.name);
 
+            // Add new labels
             labels
                 .enter()
                 .append('text')
+                .call(_textSpan(x))
                 .attr('class', 'label')
-                .attr('x', d => x(d.value) - 8)
-                .attr('y', d => y(top_n + 1) + 5 + ((y(1) - y(0)) / 2))
-                .style('text-anchor', 'end')
-                .html(d => d.name)
+                .attr("transform", _translateXY(x, y))
+                .style('text-anchor', _textAnchor(x))
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1);
+                .attr("transform", _translateXY(x, y));
 
-
+            // Transition labels
             labels
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1)
-                .attr('x', (d, i, n) => {
-                    if (n[i].getComputedTextLength() < (x(d.value) - 8)) {
-                        return x(d.value) - 8;
-                    } else {
-                        return x(d.value) + (valueLabelFormat(d.value).toString().length * 10);
-                    }
-                })
-                .style("text-anchor", (d, i, n) => {
-                    if (n[i].getComputedTextLength() < (x(d.value) - 8)) {
-                        return "end";
-                    } else {
-                        return "start";
-                    }
-                })
+                .attr("transform", _translateXY(x, y))
+                .style("text-anchor", _textAnchor(x))
+                .call(s => s.select("tspan.value")
+                    .tween("text", (d) => {
+                        let i = d3.interpolate(d.lastValue, d.value);
+                        return function (t) {
+                            this.textContent = valueLabelFormat(i(t));
+                        };
+                    })
+                );
 
+            // Remove low ranking labels
             labels
                 .exit()
                 .transition()
                 .duration(tickDuration)
                 .ease(d3.easeLinear)
-                .attr('x', d => x(d.value) - 8)
-                .attr('y', d => y(top_n + 1) + 5)
-                .remove();
-
-            let valueLabels = svg.selectAll('.valueLabel').data(timeSlice, d => d.name);
-
-            valueLabels
-                .enter()
-                .append('text')
-                .attr('class', 'valueLabel')
-                .attr('x', d => x(d.value) + 5)
-                .attr('y', d => y(top_n + 1) + 5)
-                .text(d => valueLabelFormat(d.lastValue))
-                .transition()
-                .duration(tickDuration)
-                .ease(d3.easeLinear)
-                .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1);
-
-            valueLabels
-                .transition()
-                .duration(tickDuration)
-                .ease(d3.easeLinear)
-                .attr('x', d => x(d.value) + 5)
-                .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1)
-                .tween("text", function (d) {
-                    let i = d3.interpolate(d.lastValue, d.value);
-                    return function (t) {
-                        this.textContent = valueLabelFormat(i(t));
-                    };
-                });
-
-            valueLabels
-                .exit()
-                .transition()
-                .duration(tickDuration)
-                .ease(d3.easeLinear)
-                .attr('x', d => x(d.value) + 5)
-                .attr('y', d => y(top_n + 1) + 5)
+                .attr("transform", d => {
+                    let dx = x(d.value) - 8;
+                    let dy = y(topN + 1) + 5;
+                    return `translate(${dx} ${dy})`;
+                })
                 .remove();
 
             timeText.html(timeLabelFormat(currentTime));
 
-            if (currentTime === endTime) clearInterval(chart.current.ticker);
+            if (currentTime === endTime) {
+                clearInterval(chart.current.ticker);
+                onComplete()
+            }
 
             currentTime = (+currentTime) + timeStep;
 
         }, tickDuration);
-    }, [startTime, endTime, tickDuration, timeStep, top_n, barPadding, procData, valueLabelFormat, timeLabelFormat]);
+    }, [startTime, endTime, tickDuration, timeStep, topN, barPadding, procData, timeLabelFormat, _drawBars, _barX, _barY, _barWidth,
+        _textAnchor, _textSpan, _translateXY, valueLabelFormat, onComplete]);
 
     const chartRef = useD3((svg) => {
 
@@ -294,18 +390,18 @@ export function BarChartRace(props) {
         // Calculate rank
         let timeSlice = procData.filter(d => d.timeStep === chart.current.currentTime && !isNaN(d.value))
             .sort((a, b) => b.value - a.value)
-            .slice(0, top_n);
+            .slice(0, topN);
 
         timeSlice.forEach((d, i) => d.rank = i);
 
         const [xmin, xmax] = d3.extent(timeSlice, d => d.value);
 
         let x = d3.scaleLinear()
-            .domain([0, xmax])
+            .domain([xmin > 0 ? 0 : xmin, xmax < 0 ? 0 : xmax])
             .range([margin.left, width - margin.right - 65]);
 
         let y = d3.scaleLinear()
-            .domain([top_n, 0])
+            .domain([topN, 0])
             .range([height - margin.bottom, margin.top]);
 
         let xAxis = d3.axisTop()
@@ -324,55 +420,20 @@ export function BarChartRace(props) {
         svg.selectAll('rect.bar')
             .data(timeSlice, d => d.name)
             .enter()
-            .append('rect')
-            .attr('class', 'bar')
-            .attr('x', x(0) + 1)
-            .attr('width', d => {
-                let w = x(d.value) - x(0) - 1;
-                return w > 0 ? w : 1;
-            })
-            .attr('y', d => y(d.rank) + 5)
-            .attr('height', y(1) - y(0) - barPadding)
-            .style('fill', d => d.colour);
+            .call(_drawBars(x, y, barPadding))
 
         svg.selectAll('text.label')
             .data(timeSlice, d => d.name)
             .enter()
-            .append('text')
-            .attr('class', 'label')
-            .text(d => d.name)
-            .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1)
-            .attr('x', (d, i, n) => {
-                if (n[i].getComputedTextLength() < (x(d.value) - 8)) {
-                    return x(d.value) - 8;
-                } else {
-                    return x(d.value) + (valueLabelFormat(d.value).toString().length * 10);
-                }
-            })
-            .style("text-anchor", (d, i, n) => {
-                if (n[i].getComputedTextLength() < (x(d.value) - 8)) {
-                    return "end";
-                } else {
-                    return "start";
-                }
-            })
-
-        svg.selectAll('text.valueLabel')
-            .data(timeSlice, d => d.name)
-            .enter()
-            .append('text')
-            .attr('class', 'valueLabel')
-            .attr('x', d => x(d.value) + 5)
-            .attr('y', d => y(d.rank) + 5 + ((y(1) - y(0)) / 2) + 1)
-            .text(d => valueLabelFormat(d.lastValue));
+            .call(_drawLabels(x, y, 'label'))
 
         let timeText = svg.append('text')
-            .attr('class', 'timeText')
+            .attr('class', 'timeStep')
             .attr('x', width - margin.right)
-            .attr('y', height - 25)
+            .attr('y', 0 + 50)
             .style('text-anchor', 'end')
             .html(timeLabelFormat(chart.current.currentTime))
-            .call(halo, 10);
+            .call(_halo, 2);
 
         chart.current = {
             ...chart.current,
@@ -398,19 +459,26 @@ export function BarChartRace(props) {
 
     return (
         <div className="polirural-barchart-race p-3">
-            <Row className="mb-3">
+            <div className="chart-container">
                 <svg
                     ref={chartRef}
                     viewBox={`0 0 ${width} ${height}`}
                     xmlns="http://www.w3.org/2000/svg"
                 >
                 </svg>
-            </Row>
-            <Row className="mb-3">
-                <Button onClick={() => runRace()}>Restart</Button>
-            </Row>
+            </div>
+            <div className="action-buttons">
+                <button onClick={() => runRace()}>Start</button>
+                <button onClick={() => stopRace()}>Stop</button>
+            </div>
         </div>
     )
+}
+
+BarChartRace.CALC_METHOD = {
+    STANDARD: "standard",
+    PCT_DIFF: "pct_diff",
+    ACCUMULATED: "accumulated"
 }
 
 BarChartRace.propTypes = {
@@ -420,15 +488,16 @@ BarChartRace.propTypes = {
     valueAccessor: PropTypes.func.isRequired,
     labelAccessor: PropTypes.func.isRequired,
     timeAccessor: PropTypes.func.isRequired,
+    colourAccessor: PropTypes.func.isRequired,
     caption: PropTypes.string.isRequired,
     startTime: PropTypes.number.isRequired,
     endTime: PropTypes.number.isRequired,
     timeStep: PropTypes.number.isRequired,
     tickDuration: PropTypes.number,
-    top_n: PropTypes.number,
+    topN: PropTypes.number,
     height: PropTypes.number,
     width: PropTypes.number,
-    usePctGrowth: PropTypes.bool,
+    calcMethod: PropTypes.string,
     margin: PropTypes.shape({
         top: PropTypes.number,
         right: PropTypes.number,
@@ -438,12 +507,14 @@ BarChartRace.propTypes = {
     valueLabelFormat: PropTypes.func,
     timeLabelFormat: PropTypes.func,
     onComplete: PropTypes.func,
-    run: PropTypes.bool
+    run: PropTypes.bool,
+    labelFontSize: PropTypes.number,
+    labelPadding: PropTypes.number
 }
 
 BarChartRace.defaultProps = {
     tickDuration: 500,
-    top_n: 12,
+    topN: 10,
     width: 640,
     height: 480,
     margin: {
@@ -452,9 +523,13 @@ BarChartRace.defaultProps = {
         bottom: 5,
         left: 0
     },
-    usePctGrowth: false,
+    labelFontSize: 12,
+    labelPadding: 5,
+    calcMethod: BarChartRace.CALC_METHOD.STANDARD,
     valueLabelFormat: d3.format(',.2f'),
     timeLabelFormat: d3.format('d'),
+    colourAccessor: () => null,
+    colourScale: (colourKey) => d3.hsl(Math.random() * 360, 0.75, 0.75),
     onComplete: () => {
         console.debug("Not implemented");
     },
