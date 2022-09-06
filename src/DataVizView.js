@@ -54,7 +54,7 @@ export function DataVizView() {
     const [selectedModel, setSelectedModel] = useState()
     const [selectedDomain, setSelectedDomain] = useState()
 
-    const [chartField, setChartField] = useState({
+    const [chartField1, setChartField1] = useState({
         value: Object.keys(fields)[0],
         label: fields[Object.keys(fields)[0]]
     });
@@ -191,7 +191,7 @@ export function DataVizView() {
                             let label = e.target.selectedOptions[0].label;
                             let value = e.target.value;
                             setDoRun(false);
-                            setChartField({
+                            setChartField1({
                                 value,
                                 label
                             });
@@ -220,14 +220,14 @@ export function DataVizView() {
             <Row>
                 <Col>
                     <BarChartRace
-                        title={chartField.label}
-                        description={`${chartField.label}  over time`}
+                        title={chartField1.label}
+                        description={`${chartField1.label}  over time`}
                         caption="Source: Polirural SDT"
                         startTime={2020}
                         endTime={2040}
                         tickDuration={500}
                         timeStep={0.25}
-                        valueAccessor={(d) => (d[chartField.value])}
+                        valueAccessor={(d) => (d[chartField1.value])}
                         labelAccessor={(d) => `${d.MODEL}: ${d.scenario}`}
                         colourAccessor={(d) => `${d.MODEL}: ${d.scenario}`}
                         // labelAccessor={(d) => d.MODEL}
