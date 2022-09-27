@@ -1,8 +1,17 @@
-[![License](https://img.shields.io/badge/Licensing-GPLv3.0-lightgrey?style=plastic)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+# PoliRural Policy Options Explorer
 
-The purpose of this tool is to leverage the access to System Dynamics simulations for non-experts involved in foresight analysis, policy and strategy formulation for rural communities.
+The PoliRural Policy Options Explorer is a demonstrator application that shows the potential of using SDM models outside the confines of vendor-provided, restricted or inpermissively costly execution environments.
 
----
+![PoliRural Policy Options Explorer landing page](https://user-images.githubusercontent.com/5701303/192638611-d87c1e0c-5ec2-46ca-9745-2246c5192d53.png)
+> Fig. 1: PoliRural Policy Options Explorer landing page
 
-[Getting Started with Create React App](https://github.com/polirural/PoliRural-SD-client/blob/main/GettingStarted.md)
+![PoliRural Policy Options Explorer model execution result page](https://user-images.githubusercontent.com/5701303/192638616-0da5f98e-b293-4160-89ff-ff251b4dd346.png)
+> Fig. 2: PoliRural Policy Options Explorer model execution result page
 
+[Getting started with the Policy Options Explorer](GettingStarted.md)
+
+The PoliRural Policy Options Explorer demonstrator client has been developed by:
+
+<img src="https://user-images.githubusercontent.com/5701303/192630251-ca28b257-7867-4cf7-afd9-c3f2f5870024.png" width="250" align="center"/>
+
+in close cooperation with BOSC (technology support) and 22Sistema (SDM expertise)
