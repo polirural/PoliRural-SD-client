@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/Licensing-GPLv3.0-lightgrey?style=plastic)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+[![License](https://img.shields.io/badge/Licensing-GPLv3.0-lightgrey?style=plastic)](https://www.gnu.org/licenses/gpl-3.0.en.html) [![Sandbox](https://img.shields.io/badge/Active-orange?style=plastic)](https://polirural-sdm.avinet.no/)
 # PoliRural Policy Options Explorer
 
 The PoliRural Policy Options Explorer is a demonstrator application that shows the potential of using SDM models outside the confines of vendor-provided, restricted or inpermissively costly execution environments.
