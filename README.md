@@ -1,5 +1,5 @@
 [![License](https://img.shields.io/badge/Licensing-GPLv3.0-lightgrey?style=plastic)](https://www.gnu.org/licenses/gpl-3.0.en.html)
-[![Status](https://img.shields.io/badge/Try&nbsp;models-&nbsp;Policy&nbsp;Options&nbsp;Explorer-green?style=plastic)](https://hub.polirural.eu/ra-explorer/#/policy-options-explorer)
+[![Status](https://img.shields.io/badge/Try&nbsp;models-&nbsp;Policy&nbsp;Options&nbsp;Explorer-green?style=plastic,alt=blabla)](https://hub.polirural.eu/ra-explorer/#/policy-options-explorer)
 
 
 # PoliRural Policy Options Explorer
