@@ -1,9 +1,7 @@
 [![License](https://img.shields.io/badge/Licensing-GPLv3.0-lightgrey?style=plastic)](https://www.gnu.org/licenses/gpl-3.0.en.html)
 [![Status](https://img.shields.io/badge/Try&nbsp;models-&nbsp;Policy&nbsp;Options&nbsp;Explorer-green?style=plastic)](https://hub.polirural.eu/ra-explorer/#/policy-options-explorer)
 
-For trying models:
-
-:page_facing_up: `user`/`password` are `demo`/`demo`
+:page_facing_up: Please, for trying the models use next credentials: `user`/`password` are `demo`/`demo`
 
 # PoliRural Policy Options Explorer
 
