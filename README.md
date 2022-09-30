@@ -13,7 +13,11 @@ The PoliRural Policy Options Explorer is a demonstrator application that shows t
 ![PoliRural Policy Options Explorer model execution result page](https://user-images.githubusercontent.com/5701303/192638616-0da5f98e-b293-4160-89ff-ff251b4dd346.png)
 > Fig. 2: PoliRural Policy Options Explorer model execution result page
 
+---
+
 [Getting started with the Policy Options Explorer](GettingStarted.md)
+
+---
 
 The PoliRural Policy Options Explorer demonstrator client has been developed by:
 
